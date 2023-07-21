@@ -49,7 +49,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	// Add the client to the room
 	room.clients[client] = true
 
-	log.Println("Room",roomName, "->", room)
+	log.Printf("Room %s (%d client(s) in the room)", roomName, len(room.clients))
 	log.Println("client ->", client)
 	go handleMessages(client, room)
 }
