@@ -7,6 +7,6 @@
     $: room = data.room;
 </script>
 
-<h1>Welcome in room : {data.room}</h1>
+<h1>Welcome in room : {room}</h1>
 
-<WebSocketConnection room={data.room}/>
+<WebSocketConnection room={room}/>

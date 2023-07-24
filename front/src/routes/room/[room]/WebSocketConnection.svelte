@@ -1,7 +1,11 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+	import { MessageType } from './message';
+	import type { Message } from './message';
 
-	export let room: string;
+	export let room: string = '';
+
+	const dispatch = createEventDispatcher();
 
 	let socket: WebSocket;
 
@@ -13,14 +17,15 @@
 
 		socket.onopen = () => {
 			console.log('WebSocket connected!');
-            socket.send("salut")
+			socket.send('salut');
 		};
 
 		socket.onmessage = (event) => {
-			const message = event.data;
+			const message: Message = event.data;
 			console.log('Message received :', message);
 			// Handle incoming messages from the server
 			// (e.g., updating the user interface based on received data)
+			dispatch(message.type, message.payload);
 		};
 
 		socket.onerror = (error) => {
@@ -32,6 +37,12 @@
 			console.log('->', event);
 		};
 	});
+
+	onDestroy(() => {
+		if (socket !== null && socket !== undefined) {
+			socket.close();
+		}
+	});
 </script>
 
-<p>Status : {connState}</p>
+<p>Status : {connState} - {room}</p>
