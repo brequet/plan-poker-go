@@ -1,8 +1,10 @@
 import { json } from '@sveltejs/kit';
 
+// TODO: move to api route
+
 export async function POST({ request }): Promise<any> {
 	const { roomName } = await request.json();
-	let responseData: any; //TODO: type response on room creation
+	let responseData: any; //TODO: type response here on room creation
 	console.log('room name:', roomName);
 	try {
 		console.log('room name body post:', JSON.stringify({ roomName }));

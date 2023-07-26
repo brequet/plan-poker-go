@@ -11,30 +11,44 @@
 
 	let roomData = {
 		user: {
-			// todo type, with id..
+			// TODO: type, with id..
 			nickname: data.nickname ?? ''
 		},
 		room: {
 			code: $page.params.room,
             name: 'todo',
-			exist: false
+			exist: false // TODO: fetch and update room status at page arrival
 		}
 	};
 
-	function onNicknameChoice(nickname: string) {
+	async function onNicknameChoice(nickname: string) {
 		roomData.user.nickname = nickname;
-
+        localStorage.setItem('nickname', nickname)
 		// TODO: check with server if room exist
+        const response = await fetch('/room', {
+				method: 'POST',
+				body: JSON.stringify( {roomName: roomData.room.name} ),
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+
+			if (!response.ok) {
+				console.log('response not ok');
+			} else {
+				const { roomCode } = await response.json();
+				console.log('eheeheh', roomCode);
+			}
 
 		isConnectionConfirmedByUser = true;
 	}
 
-    // TODO: valid route room name https://learn.svelte.dev/tutorial/param-matchers
+    // TODO: validate route room name https://learn.svelte.dev/tutorial/param-matchers
 </script>
 
 <div class="container mx-auto">
 	{#if !isConnectionConfirmedByUser}
-		<NicknameChoice on:nicknameChoice={(event) => onNicknameChoice(event.detail.nickname)} />
+		<NicknameChoice nickname={roomData.user.nickname} on:nicknameChoice={(event) => onNicknameChoice(event.detail.nickname)} />
 	{:else if !roomData.room.exist}
 		<RoomNotFound roomCode={roomData.room.code} />
 	{:else}

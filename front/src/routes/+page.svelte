@@ -37,22 +37,20 @@
 </script>
 
 <div class="flex justify-center items-center h-full">
-	<!-- Create Room Block -->
 	<form class="bg-white p-6 rounded-lg shadow-lg mx-4"> 
 		<!-- TODO: could be a component (create/join) -->
 		<h2 class="text-2xl font-bold mb-4">Create a Room</h2>
 		<div class="flex items-center mb-4">
-			<label class="mr-2" for="roomNameInput">
+			<label class="block text-gray-700 font-semibold">
 				Room Name:
-			</label>
 				<input
 					class="border rounded-md py-2 px-4 w-full"
 					type="text"
-					name="roomNameInput"
 					bind:value={roomName}
 					required
-					placeholder="Enter Room Name"
+					placeholder="My planning poker room"
 				/>
+			</label>
 		</div>
 		<button
 			class="bg-blue-500 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-md w-full"
@@ -63,21 +61,19 @@
 		</button>
 	</form>
 
-	<!-- Join Room Block -->
 	<form class="bg-white p-6 rounded-lg shadow-lg mx-4">
 		<h2 class="text-2xl font-bold mb-4">Join a Room</h2>
 		<div class="flex items-center mb-4">
-			<label class="mr-2" for="roomCodeInput">
+			<label class="block text-gray-700 font-semibold">
 				Room Code:
-			</label>
 				<input
 					class="border rounded-md py-2 px-4 w-full"
 					type="text"
-					name="roomCodeInput"
 					bind:value={roomCode}
 					required
 					placeholder="Enter Room Code"
 				/>
+			</label>
 		</div>
 		<button
 			class="bg-blue-500 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-md w-full"

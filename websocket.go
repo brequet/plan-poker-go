@@ -131,6 +131,14 @@ func main() {
 	router.HandleFunc("/ws", wsHandler)
 	router.HandleFunc("/api/room", createRoomHandler)
 
+	
+	/*
+		TODO: endpoint for
+		- fetching room info (name, code, connected user..)
+		- fetching all rooms (for admin purpose)
+		- 
+	*/
+
 	// Where ORIGIN_ALLOWED is like `scheme://dns[:port]`, or `*` (insecure)
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})

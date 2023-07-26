@@ -16,7 +16,7 @@
 
 		socket.onopen = () => {
 			console.log('WebSocket connected!');
-			socket.send('salut');
+			socket.send(`hello from ${user.nickname}`);
 		};
 
 		socket.onmessage = (event) => {
