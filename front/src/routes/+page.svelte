@@ -34,7 +34,7 @@
 				console.log('Room ID:', responseData.roomId);
 				alert('ROOM CODE : ' + responseData.roomId);
 				// TODO:change all room id to room code
-                // todo: refactor
+				// todo: refactor
 			}
 		} catch (error) {
 			console.error('Error creating room:', error);
@@ -50,51 +50,53 @@
 	}
 </script>
 
-<h1 class="text-3xl font-bold underline">
-	Plan Poker Go
-</h1>
-
-<div class="flex justify-center items-center h-screen">
+<div class="flex justify-center items-center bg-slate-50 h-full">
 	<!-- Create Room Block -->
 	<div class="bg-white p-6 rounded-lg shadow-lg mx-4">
-	  <h2 class="text-2xl font-bold mb-4">Create a Room</h2>
-	  <div class="flex items-center mb-4">
-		<label class="mr-2">Room Name:</label>
-		<input
-		  class="border rounded-md py-2 px-4 w-full"
-		  type="text"
-		  bind:value={roomName}
-		  placeholder="Enter Room Name"
-		/>
-	  </div>
-	  <button
-		class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-md"
-		on:click={createRoom}
-	  >
-		Create
-	  </button>
+		<h2 class="text-2xl font-bold mb-4">Create a Room</h2>
+		<div class="flex items-center mb-4">
+			<label class="mr-2"
+				>Room Name:
+				<input
+					class="border rounded-md py-2 px-4 w-full"
+					type="text"
+					bind:value={roomName}
+					placeholder="Enter Room Name"
+				/>
+			</label>
+		</div>
+		<button
+			class="bg-blue-500 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-md w-full"
+			disabled={roomName.length === 0}
+			on:click={createRoom}
+		>
+			Create
+		</button>
 	</div>
-  
+
 	<!-- Join Room Block -->
 	<div class="bg-white p-6 rounded-lg shadow-lg mx-4">
-	  <h2 class="text-2xl font-bold mb-4">Join a Room</h2>
-	  <div class="flex items-center mb-4">
-		<label class="mr-2">Room Code:</label>
-		<input
-		  class="border rounded-md py-2 px-4 w-full"
-		  type="text"
-		  bind:value={roomCode}
-		  placeholder="Enter Room Code"
-		/>
-	  </div>
-	  <button
-		class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-md"
-		on:click={joinRoom}
-	  >
-		Join
-	  </button>
+		<h2 class="text-2xl font-bold mb-4">Join a Room</h2>
+		<div class="flex items-center mb-4">
+			<label class="mr-2"
+				>Room Code:
+				<input
+					class="border rounded-md py-2 px-4 w-full"
+					type="text"
+					bind:value={roomCode}
+					placeholder="Enter Room Code"
+				/>
+			</label>
+		</div>
+		<button
+			class="bg-blue-500 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-md w-full"
+			disabled={roomCode.length === 0}
+			on:click={joinRoom}
+		>
+			Join
+		</button>
 	</div>
-  </div>
+</div>
 
 <style>
 	.container {
