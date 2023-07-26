@@ -50,45 +50,51 @@
 	}
 </script>
 
-<h1>Plan Poker Go</h1>
+<h1 class="text-3xl font-bold underline">
+	Plan Poker Go
+</h1>
 
-<div class="container">
+<div class="flex justify-center items-center h-screen">
 	<!-- Create Room Block -->
-	<div class="block">
-		<h2>Create a Room</h2>
-		<div class="input-group">
-			<label class="input-label" for="createRoomInput">Room Name:</label>
-			<input
-				class="input-field"
-				type="text"
-				id="createRoomInput"
-				bind:value={roomName}
-				placeholder="Enter Room Name"
-			/>
-		</div>
-		<button class="button" disabled={roomName.length === 0} on:click={() => createRoom()}>
-			Create
-		</button>
+	<div class="bg-white p-6 rounded-lg shadow-lg mx-4">
+	  <h2 class="text-2xl font-bold mb-4">Create a Room</h2>
+	  <div class="flex items-center mb-4">
+		<label class="mr-2">Room Name:</label>
+		<input
+		  class="border rounded-md py-2 px-4 w-full"
+		  type="text"
+		  bind:value={roomName}
+		  placeholder="Enter Room Name"
+		/>
+	  </div>
+	  <button
+		class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-md"
+		on:click={createRoom}
+	  >
+		Create
+	  </button>
 	</div>
-
+  
 	<!-- Join Room Block -->
-	<div class="block">
-		<h2>Join a Room</h2>
-		<div class="input-group">
-			<label class="input-label" for="joinRoomInput">Room Name:</label>
-			<input
-				class="input-field"
-				type="text"
-				id="joinRoomInput"
-				bind:value={roomCode}
-				placeholder="Enter Room Code"
-			/>
-		</div>
-		<button class="button" disabled={roomCode.length === 0} on:click={() => joinRoom()}>
-			Join
-		</button>
+	<div class="bg-white p-6 rounded-lg shadow-lg mx-4">
+	  <h2 class="text-2xl font-bold mb-4">Join a Room</h2>
+	  <div class="flex items-center mb-4">
+		<label class="mr-2">Room Code:</label>
+		<input
+		  class="border rounded-md py-2 px-4 w-full"
+		  type="text"
+		  bind:value={roomCode}
+		  placeholder="Enter Room Code"
+		/>
+	  </div>
+	  <button
+		class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-md"
+		on:click={joinRoom}
+	  >
+		Join
+	  </button>
 	</div>
-</div>
+  </div>
 
 <style>
 	.container {
