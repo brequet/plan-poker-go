@@ -1,5 +1,9 @@
-export const load = ({params}) => {
+export const load = ({cookies}) => {
+    const nickname = cookies.get('nickname');
+
+    // todo: fetch room info (code, name)
+
     return {
-        room: params.room
-    }
+        nickname
+    };
 }

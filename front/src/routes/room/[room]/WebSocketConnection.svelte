@@ -2,14 +2,13 @@
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import { MessageType } from './message';
 	import type { Message } from './message';
-
-	export let room: string = '';
+	
+	export let user: {nickname: string};
+	export let room: {code: string};
 
 	const dispatch = createEventDispatcher();
 
 	let socket: WebSocket;
-
-	$: connState = socket && socket.readyState;
 
 	onMount(() => {
 		const url = 'ws://localhost:8080/ws'; // Replace with the URL of your Golang backend WebSocket server
@@ -44,5 +43,3 @@
 		}
 	});
 </script>
-
-<p>Status : {connState} - {room}</p>

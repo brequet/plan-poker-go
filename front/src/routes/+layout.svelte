@@ -8,12 +8,17 @@
 		<p class="text-white mt-2">Plan and estimate together!</p>
 	</div>
 
-    <nav>
-        <a href='/'>HOME</a>
-    </nav>
+	<nav class="flex items-center justify-between bg-blue-500 py-4 px-8">
+		<a
+			href="/"
+			class="text-white text-lg font-semibold py-2 px-4 hover:underline hover:text-gray-100"
+		>
+			Home
+		</a>
+	</nav>
 </header>
 
-<main class="h-full">
+<main class="flex-1 bg-gray-100 p-4">
 	<slot />
 </main>
 

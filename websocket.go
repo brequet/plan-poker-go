@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
 	// "os"
 
 	"github.com/gorilla/handlers"
@@ -36,7 +37,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("New connection !")
 
 	// Get the room name from the request URL or other parameters
-	roomName := "room1" // Replace with actual room name (you'll need to extract it from the request)
+	roomName := "room1" // TODO: Replace with actual room name (you'll need to extract it from the request)
 
 	// Create a new client
 	client := &Client{conn: conn}
@@ -63,6 +64,7 @@ func handleMessages(client *Client, room *Room) {
 		log.Println("Client deconnecting", client)
 		delete(room.clients, client)
 		client.conn.Close()
+		// TODO: when no client left in room, delete room
 	}()
 
 	for {
@@ -108,10 +110,10 @@ func createRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Respond with the room details (e.g., room ID) to the frontend
 	response := struct {
-		RoomID string `json:"roomId"`
+		RoomCode string `json:"roomCode"`
 		// Other relevant fields
 	}{
-		RoomID: roomData.RoomName,
+		RoomCode: roomData.RoomName,
 		// RoomID: newRoom.ID,
 		// Populate other response data if needed
 	}
