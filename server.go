@@ -7,6 +7,7 @@ import (
 
 	// "os"
 
+	rm "github.com/baptiste-requet/plan-poker-go/rooms-manager"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -130,6 +131,8 @@ func main() {
 
 	router.HandleFunc("/ws", wsHandler)
 	router.HandleFunc("/api/room", createRoomHandler)
+
+	rm.Hello()
 
 	
 	/*

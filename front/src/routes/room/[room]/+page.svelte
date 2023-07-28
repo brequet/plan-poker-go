@@ -17,7 +17,7 @@
 		room: {
 			code: $page.params.room,
             name: 'todo',
-			exist: false // TODO: fetch and update room status at page arrival
+			exist: !false // TODO: fetch and update room status at page arrival
 		}
 	};
 
