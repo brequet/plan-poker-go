@@ -57,8 +57,8 @@ func ConnectNewUserToRoom(nickname, roomCode string) *User { // TODO: return err
 	}
 
 	newUser := createUser(nickname)
-	log.Printf("Adding user with nickname '%s', to room : '%s'", nickname, roomCode)
 	room.users[newUser] = true
+	log.Printf("User '%s' joined the room : '%s'", nickname, roomCode)
 
 	return newUser
 }

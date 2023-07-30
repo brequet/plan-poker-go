@@ -66,26 +66,18 @@ func handleMessages(client *Client) {
 		case JOIN_ROOM:
 			var joinRoomMessage JoinRoomMessage
 			if err := json.Unmarshal(receivedMessage.Payload, &joinRoomMessage); err != nil {
-				log.Println("Unmarshal error join")
-				return
+				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
+				break
 			}
-			log.Println("joinRoomMessage", joinRoomMessage)
-
-			log.Printf("User '%s' joined room '%s'", joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
-			// TODO: Handle user joining the room, e.g., store the user in the room
-
+			onRoomJoinEvent(joinRoomMessage)
 
 		case USER_JOINED:
 			var userJoinedMessage UserJoinedMessage
 			if err := json.Unmarshal(receivedMessage.Payload, &userJoinedMessage); err != nil {
-				// Handle unmarshal error
-				log.Println("Unmarshal error joined")
-				return
+				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
+				break
 			}
 			log.Println("userJoinedMessage", userJoinedMessage)
-
-			// Handle the USER_JOINED message and use userJoinedMessage.UserName
-
 
 		default:
 			log.Println("Received unsupported message type:", receivedMessage.Type)
@@ -112,6 +104,12 @@ func handleMessages(client *Client) {
 		// 	}
 		// }
 	}
+}
+
+func onRoomJoinEvent(joinRoomMessage JoinRoomMessage) { // todo in event.go ?
+	rm.ConnectNewUserToRoom(joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
+	// TODO: response to validate connection or error, like return own user id
+	// TODO: alert all user in room of new connection (go routine)
 }
 
 // HTTP endpoint to create a new room
@@ -160,10 +158,9 @@ func main() {
 		-
 	*/
 
-	// Where ORIGIN_ALLOWED is like `scheme://dns[:port]`, or `*` (insecure)
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
-	originsOk := handlers.AllowedOrigins([]string{"*"})
 	// originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", handlers.CORS(originsOk, headersOk, methodsOk)(router)))
