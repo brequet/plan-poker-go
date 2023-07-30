@@ -4,55 +4,105 @@ import (
 	"testing"
 )
 
-// TestCreateRoom tests the CreateRoom function
 func TestCreateRoom(t *testing.T) {
-	// Test creating a new room
 	roomName := "TestRoom"
-	roomCode := CreateRoom(roomName)
+	createdRoom := CreateRoom(roomName)
 
-	// Check if the room code is not empty
-	if roomCode == "" {
-		t.Errorf("Expected a non-empty room code, got an empty string")
+	// Check if the created room is not nil
+	if createdRoom == nil {
+		t.Errorf("Expected a non-nil room, but got nil")
 	}
 
-	// Check if the room with the same name exists
-	existingRoomCode := CreateRoom(roomName)
-	if existingRoomCode != roomCode {
-		t.Errorf("Expected the existing room code to match the previously created room code")
+	// Check if the room exists in the rooms map
+	if _, exist := rooms[createdRoom.code]; !exist {
+		t.Errorf("Expected the created room to exist in the rooms map, but it does not")
+	}
+
+	// Check if the room's name matches the provided name
+	if createdRoom.name != roomName {
+		t.Errorf("Expected room name %s, but got %s", roomName, createdRoom.name)
 	}
 }
 
-// TestFindRoomCodeByName tests the findRoomCodeByName function
-func TestFindRoomCodeByName(t *testing.T) {
-	// Create a room and get its code
+func TestFindRoomByRoomCode(t *testing.T) {
 	roomName := "TestRoom"
-	roomCode := CreateRoom(roomName)
+	createdRoom := CreateRoom(roomName)
 
-	// Test finding the room code by its name
-	foundRoomCode := findRoomCodeByName(roomName)
+	foundRoom := FindRoomByRoomCode(createdRoom.code)
 
-	// Check if the found room code matches the expected room code
-	if foundRoomCode != roomCode {
-		t.Errorf("Expected room code %s, but found %s", roomCode, foundRoomCode)
+	// Check if the found room is not nil
+	if foundRoom == nil {
+		t.Errorf("Expected a non-nil room, but got nil")
 	}
 
-	// Test finding a non-existent room code
-	nonExistentRoomName := "NonExistentRoom"
-	nonExistentRoomCode := findRoomCodeByName(nonExistentRoomName)
+	// Check if the found room's code matches the provided code
+	if foundRoom.code != createdRoom.code {
+		t.Errorf("Expected room code %s, but got %s", createdRoom.code, foundRoom.code)
+	}
 
-	// Check if the non-existent room code is an empty string
-	if nonExistentRoomCode != "" {
-		t.Errorf("Expected an empty room code for a non-existent room, but found %s", nonExistentRoomCode)
+	// Check finding a non-existent room
+	nonExistentRoomCode := "NonExistentRoom"
+	notFoundRoom := FindRoomByRoomCode(nonExistentRoomCode)
+
+	// Check if the not found room is nil
+	if notFoundRoom != nil {
+		t.Errorf("Expected a nil room for a non-existent room, but got a non-nil room")
 	}
 }
 
-// TestGenerateRoomCode tests the generateRoomCode function
-func TestGenerateRoomCode(t *testing.T) {
-	// Generate a room code
-	roomCode := generateRoomCode()
+func TestConnectNewUserToRoom(t *testing.T) {
+	roomName := "TestRoom"
+	createdRoom := CreateRoom(roomName)
 
-	// Check if the generated room code has the correct length
-	if len(roomCode) != ROOM_CODE_SIZE {
-		t.Errorf("Expected room code length of %d, but found %d", ROOM_CODE_SIZE, len(roomCode))
+	nickname := "TestUser"
+	user := ConnectNewUserToRoom(nickname, createdRoom.code)
+
+	// Check if the user connected successfully
+	if user == nil {
+		t.Errorf("Expected the user to connect to the room, but it didn't happen")
+	}
+
+	// Check if the user exists in the room's users map
+	if _, exist := createdRoom.users[user]; !exist {
+		t.Errorf("Expected the user to exist in the room's users map, but it doesn't")
+	}
+
+	// Check connecting to a non-existent room
+	nonExistentRoomCode := "NonExistentRoom"
+	userConnectedToNonExistentRoom := ConnectNewUserToRoom(nickname, nonExistentRoomCode)
+
+	// Check if the user failed to connect to the non-existent room
+	if userConnectedToNonExistentRoom != nil {
+		t.Errorf("Expected the user to fail connecting to a non-existent room, but it didn't happen")
+	}
+}
+
+func TestDisconnectUserFromRoom(t *testing.T) {
+	roomName := "TestRoom"
+	createdRoom := CreateRoom(roomName)
+
+	nickname := "TestUser"
+	ConnectNewUserToRoom(nickname, createdRoom.code)
+
+	user := &User{nickname: nickname}
+	userDisconnected := DisconnectUserFromRoom(user, createdRoom.code)
+
+	// Check if the user disconnected successfully
+	if !userDisconnected {
+		t.Errorf("Expected the user to disconnect from the room, but it didn't happen")
+	}
+
+	// Check if the user doesn't exist in the room's users map after disconnection
+	if _, exist := createdRoom.users[user]; exist {
+		t.Errorf("Expected the user to be removed from the room's users map, but it still exists")
+	}
+
+	// Check disconnecting from a non-existent room
+	nonExistentRoomCode := "NonExistentRoom"
+	userDisconnectedFromNonExistentRoom := DisconnectUserFromRoom(user, nonExistentRoomCode)
+
+	// Check if the user failed to disconnect from the non-existent room
+	if userDisconnectedFromNonExistentRoom {
+		t.Errorf("Expected the user to fail disconnecting from a non-existent room, but it didn't happen")
 	}
 }

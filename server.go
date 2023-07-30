@@ -5,8 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	// "os"
-
 	rm "github.com/baptiste-requet/plan-poker-go/rooms-manager"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -14,17 +12,14 @@ import (
 )
 
 type Client struct {
-	conn *websocket.Conn
-	// Add more client-specific fields here if needed
-}
-
-type Room struct {
-	clients map[*Client]bool
-	// Add more room-specific fields here if needed
+	conn     *websocket.Conn
+	user     *rm.User
+	roomCode string
 }
 
 var upgrader = websocket.Upgrader{}
-var rooms = make(map[string]*Room)
+
+var clients = make(map[*Client]bool)
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true } // TODO: check origin
@@ -35,60 +30,87 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("New connection !")
-
-	// Get the room name from the request URL or other parameters
-	roomName := "room1" // TODO: Replace with actual room name (you'll need to extract it from the request)
-
-	// Create a new client
-	client := &Client{conn: conn}
-
-	// Get the room for the given name or create a new one if it doesn't exist
-	room, ok := rooms[roomName]
-	if !ok {
-		room = &Room{
-			clients: make(map[*Client]bool),
-		}
-		rooms[roomName] = room
+	client := &Client{
+		conn:     conn,
+		user:     nil,
+		roomCode: "",
 	}
+	clients[client] = true
+	log.Printf("New connection from %s", client.conn.RemoteAddr())
 
-	// Add the client to the room
-	room.clients[client] = true
-
-	log.Printf("Room %s (%d client(s) in the room) : new client %s", roomName, len(room.clients), client.conn.RemoteAddr().String())
-	go handleMessages(client, room)
+	go handleMessages(client)
 }
 
-func handleMessages(client *Client, room *Room) {
+func handleMessages(client *Client) {
 	defer func() {
 		// Clean up resources when client disconnects
 		log.Println("Client deconnecting", client)
-		delete(room.clients, client)
+		if client.roomCode != "" {
+			rm.DisconnectUserFromRoom(client.user, client.roomCode)
+		}
+		delete(clients, client)
 		client.conn.Close()
-		// TODO: when no client left in room, delete room
 	}()
 
 	for {
-		// Read message from the client
-		_, message, err := client.conn.ReadMessage()
+		var receivedMessage Message
+		err := client.conn.ReadJSON(&receivedMessage)
 		if err != nil {
-			log.Println("Error reading message:", err)
+			log.Println("Error reading message from WebSocket:", err)
 			break
 		}
 
-		log.Println("msg :", string(message))
-		// Handle different message types here (e.g., poker planning estimates)
-
-		// Broadcast the received message to all other clients in the room
-		for c := range room.clients {
-			if c != client {
-				err := c.conn.WriteMessage(websocket.TextMessage, message)
-				if err != nil {
-					log.Println("Error writing message:", err)
-					break
-				}
+		// React to different message types
+		log.Println("Received message", receivedMessage)
+		switch receivedMessage.Type {
+		case JOIN_ROOM:
+			var joinRoomMessage JoinRoomMessage
+			if err := json.Unmarshal(receivedMessage.Payload, &joinRoomMessage); err != nil {
+				log.Println("Unmarshal error join")
+				return
 			}
+			log.Println("joinRoomMessage", joinRoomMessage)
+
+			log.Printf("User '%s' joined room '%s'", joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
+			// TODO: Handle user joining the room, e.g., store the user in the room
+
+
+		case USER_JOINED:
+			var userJoinedMessage UserJoinedMessage
+			if err := json.Unmarshal(receivedMessage.Payload, &userJoinedMessage); err != nil {
+				// Handle unmarshal error
+				log.Println("Unmarshal error joined")
+				return
+			}
+			log.Println("userJoinedMessage", userJoinedMessage)
+
+			// Handle the USER_JOINED message and use userJoinedMessage.UserName
+
+
+		default:
+			log.Println("Received unsupported message type:", receivedMessage.Type)
 		}
+
+		// Read message from the client
+		// _, message, err := client.conn.ReadMessage()
+		// if err != nil {
+		// 	log.Println("Error reading message:", err)
+		// 	break
+		// }
+
+		// log.Println("msg :", string(message))
+		// // Handle different message types here (e.g., poker planning estimates)
+
+		// // Broadcast the received message to all other clients in the room
+		// for c := range clients { // TODO: only client in room
+		// 	if c != client {
+		// 		err := c.conn.WriteMessage(websocket.TextMessage, message)
+		// 		if err != nil {
+		// 			log.Println("Error writing message:", err)
+		// 			break
+		// 		}
+		// 	}
+		// }
 	}
 }
 
@@ -106,17 +128,16 @@ func createRoomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a new room with the provided room name
-	// newRoom := createNewRoom(roomData.RoomName)
-	log.Printf("Creating room : %s\n", roomData.RoomName)
+	newRoom := rm.CreateRoom(roomData.RoomName)
+	log.Printf("Created room : [%s] %s\n", newRoom.Code, newRoom.Name)
 
 	// Respond with the room details (e.g., room ID) to the frontend
 	response := struct {
 		RoomCode string `json:"roomCode"`
-		// Other relevant fields
+		RoomName string `json:"roomName"`
 	}{
-		RoomCode: roomData.RoomName,
-		// RoomID: newRoom.ID,
-		// Populate other response data if needed
+		RoomCode: newRoom.Code,
+		RoomName: newRoom.Name,
 	}
 
 	// Send the response back to the frontend
@@ -132,14 +153,11 @@ func main() {
 	router.HandleFunc("/ws", wsHandler)
 	router.HandleFunc("/api/room", createRoomHandler)
 
-	rm.Hello()
-
-	
 	/*
 		TODO: endpoint for
 		- fetching room info (name, code, connected user..)
 		- fetching all rooms (for admin purpose)
-		- 
+		-
 	*/
 
 	// Where ORIGIN_ALLOWED is like `scheme://dns[:port]`, or `*` (insecure)

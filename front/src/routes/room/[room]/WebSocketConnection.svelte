@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import { MessageType } from './message';
-	import type { Message } from './message';
-	
-	export let user: {nickname: string};
-	export let room: {code: string};
+	import type { JoinRoomMessage, Message } from './message';
+
+	export let user: { nickname: string };
+	export let room: { code: string };
 
 	const dispatch = createEventDispatcher();
 
@@ -16,7 +16,20 @@
 
 		socket.onopen = () => {
 			console.log('WebSocket connected!');
-			socket.send(`hello from ${user.nickname}`);
+
+			const joinRoomMessage: JoinRoomMessage = {
+				type: MessageType.JOIN_ROOM,
+				payload: {
+					roomCode: room.code, // Replace with the actual room code
+					nickname: user.nickname // Replace with the actual user nickname
+				}
+			};
+
+			// Send the join_room message to the backend
+			socket.send(JSON.stringify(joinRoomMessage));
+
+			// socket.send(`hello from ${user.nickname}`);
+
 		};
 
 		socket.onmessage = (event) => {

@@ -13,8 +13,8 @@ interface MessageInterface {
 interface JoinRoomMessage extends MessageInterface {
 	type: MessageType.JOIN_ROOM;
 	payload: {
-		roomName: string;
-		userName: string;
+		roomCode: string;
+		nickname: string;
 	};
 }
 
