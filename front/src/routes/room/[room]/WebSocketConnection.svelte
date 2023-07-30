@@ -11,7 +11,7 @@
 	let socket: WebSocket;
 
 	onMount(() => {
-		const url = 'ws://localhost:8080/ws'; // Replace with the URL of your Golang backend WebSocket server
+		const url = 'ws://localhost:8080/ws'; // TODO: from conf file || env file
 		socket = new WebSocket(url);
 
 		socket.onopen = () => {
@@ -20,24 +20,17 @@
 			const joinRoomMessage: JoinRoomMessage = {
 				type: MessageType.JOIN_ROOM,
 				payload: {
-					roomCode: room.code, // Replace with the actual room code
-					nickname: user.nickname // Replace with the actual user nickname
+					roomCode: room.code,
+					nickname: user.nickname
 				}
 			};
 
-			// Send the join_room message to the backend
 			socket.send(JSON.stringify(joinRoomMessage));
-
-			// socket.send(`hello from ${user.nickname}`);
-
 		};
 
 		socket.onmessage = (event) => {
-			const message: Message = event.data;
-			console.log('Message received :', message);
-			// Handle incoming messages from the server
-			// (e.g., updating the user interface based on received data)
-			dispatch(message.type, message.payload);
+			const message: Message = JSON.parse(event.data);
+			dispatch('message', message);
 		};
 
 		socket.onerror = (error) => {

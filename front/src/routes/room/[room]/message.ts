@@ -3,11 +3,32 @@ enum MessageType {
 	USER_JOINED = 'user_joined',
 	SUBMIT_ESTIMATE = 'submit_estimate',
 	ESTIMATE_REVEALED = 'estimate_revealed',
-	RESET_PLANNING = 'reset_planning'
+	RESET_PLANNING = 'reset_planning',
+	USER_DISCONNECTED = 'user_disconnected',
+	CONFIRM_CONNECTION = 'confirm_connection',
 }
 
 interface MessageInterface {
 	type: MessageType;
+}
+
+interface UserDTO {
+	userName: string;
+	uuid: string;
+}
+
+interface UserDisconnectedMessage {
+	type: MessageType.USER_DISCONNECTED;
+	payload: {
+		user: UserDTO;
+	};
+}
+interface ConfirmConnectionMessage {
+	type: MessageType.CONFIRM_CONNECTION;
+	payload: {
+		user: UserDTO;
+		ConnectedUsers: UserDTO[]
+	};
 }
 
 interface JoinRoomMessage extends MessageInterface {
@@ -21,7 +42,7 @@ interface JoinRoomMessage extends MessageInterface {
 interface UserJoinedMessage {
 	type: MessageType.USER_JOINED;
 	payload: {
-		userName: string;
+		user: UserDTO;
 	};
 }
 
@@ -51,7 +72,9 @@ type Message =
 	| UserJoinedMessage
 	| SubmitEstimateMessage
 	| EstimateRevealedMessage
-	| ResetPlanningMessage;
+	| ResetPlanningMessage
+	| UserDisconnectedMessage
+	| ConfirmConnectionMessage;
 
 export type {
 	Message,
@@ -59,6 +82,8 @@ export type {
 	UserJoinedMessage,
 	SubmitEstimateMessage,
 	EstimateRevealedMessage,
-	ResetPlanningMessage
+	ResetPlanningMessage,
+	UserDisconnectedMessage,
+	ConfirmConnectionMessage
 };
 export { MessageType };

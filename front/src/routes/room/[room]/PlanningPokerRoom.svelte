@@ -1,10 +1,18 @@
 <script lang="ts">
 	export let user: {nickname: string};
 	export let room: {code: string};
+	type User = { // TODO: refactor out
+		nickname: string;
+		uuid: string;
+	};
+	export let users: User[]
 
 	const votingOptions = ['1', '2', '3', '5', '8', '13', '20', '40', '?', '☕'];
 
-    let connectedUsers = [user.nickname, "User 1","User 2","User 3"]
+    $: connectedUsers = [{
+		nickname: user.nickname,
+		uuid: null
+	}, ...users]
 </script>
 
 	<!-- Room Details -->
@@ -18,7 +26,7 @@
 		<h2 class="text-2xl font-bold mb-2">Users in the Room</h2>
 		<ul class="list-disc pl-6">
 			{#each connectedUsers as connectedUser}
-                <li>{connectedUser}</li>
+                <li>{connectedUser.nickname}</li>
             {/each}
 		</ul>
 	</div>

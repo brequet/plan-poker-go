@@ -11,6 +11,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// TODO: better logging (with levels)
+
 type Client struct {
 	conn     *websocket.Conn
 	user     *rm.User
@@ -43,25 +45,17 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 func handleMessages(client *Client) {
 	defer func() {
-		// Clean up resources when client disconnects
-		log.Println("Client deconnecting", client)
-		if client.roomCode != "" {
-			rm.DisconnectUserFromRoom(client.user, client.roomCode)
-		}
-		delete(clients, client)
-		client.conn.Close()
+		handleDisconnection(client)
 	}()
 
 	for {
-		var receivedMessage Message
+		var receivedMessage ReceiveMessage
 		err := client.conn.ReadJSON(&receivedMessage)
 		if err != nil {
 			log.Println("Error reading message from WebSocket:", err)
 			break
 		}
 
-		// React to different message types
-		log.Println("Received message", receivedMessage)
 		switch receivedMessage.Type {
 		case JOIN_ROOM:
 			var joinRoomMessage JoinRoomMessage
@@ -69,9 +63,9 @@ func handleMessages(client *Client) {
 				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
 				break
 			}
-			onRoomJoinEvent(joinRoomMessage)
+			onRoomJoinEvent(client, joinRoomMessage)
 
-		case USER_JOINED:
+		case USER_JOINED: // TODO: remove this event, this is an event back->front, makes no sense here
 			var userJoinedMessage UserJoinedMessage
 			if err := json.Unmarshal(receivedMessage.Payload, &userJoinedMessage); err != nil {
 				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
@@ -82,34 +76,102 @@ func handleMessages(client *Client) {
 		default:
 			log.Println("Received unsupported message type:", receivedMessage.Type)
 		}
-
-		// Read message from the client
-		// _, message, err := client.conn.ReadMessage()
-		// if err != nil {
-		// 	log.Println("Error reading message:", err)
-		// 	break
-		// }
-
-		// log.Println("msg :", string(message))
-		// // Handle different message types here (e.g., poker planning estimates)
-
-		// // Broadcast the received message to all other clients in the room
-		// for c := range clients { // TODO: only client in room
-		// 	if c != client {
-		// 		err := c.conn.WriteMessage(websocket.TextMessage, message)
-		// 		if err != nil {
-		// 			log.Println("Error writing message:", err)
-		// 			break
-		// 		}
-		// 	}
-		// }
 	}
 }
 
-func onRoomJoinEvent(joinRoomMessage JoinRoomMessage) { // todo in event.go ?
-	rm.ConnectNewUserToRoom(joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
-	// TODO: response to validate connection or error, like return own user id
-	// TODO: alert all user in room of new connection (go routine)
+func handleDisconnection(client *Client) {
+	// Clean up resources when client disconnects
+	log.Println("Client disconnecting", client.conn.RemoteAddr().String())
+
+	if client.roomCode != "" && client.user != nil {
+		rm.DisconnectUserFromRoom(client.user, client.roomCode)
+
+		disconnectionMessage := SendMessage{
+			Type: USER_DISCONNECTED,
+			Payload: DisconnectionMessage{
+				User: User{
+					UserName: client.user.Nickname,
+					Uuid:     client.user.Uuid,
+				},
+			},
+		}
+		go broadcastMessageToOtherClientsInRoom(disconnectionMessage, client.user, client.roomCode)
+	}
+
+	delete(clients, client)
+	client.conn.Close()
+}
+
+func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo in event.go ?
+	user := rm.ConnectNewUserToRoom(joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
+	if user == nil {
+		log.Fatalf("User %s could not join the room %s", joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
+		return
+	}
+	client.roomCode = joinRoomMessage.RoomCode
+	client.user = user
+
+	connectedUsers := []User{} // TODO: add in message existing users in the room
+	for _, connectedUser := range rm.GetAllUserFromRoomByRoomCode(client.roomCode) {
+		if connectedUser != user {
+			connectedUsers = append(connectedUsers, User{
+				UserName: connectedUser.Nickname,
+				Uuid: connectedUser.Uuid,
+			})
+		}
+	}
+
+	confirmConnexionMessage := SendMessage{
+		Type: CONFIRM_CONNECTION,
+		Payload: ConfirmConnectionMessage{
+			User: User{
+				UserName: user.Nickname,
+				Uuid:     user.Uuid,
+			},
+			ConnectedUsers: connectedUsers,
+		},
+	}
+	err := client.conn.WriteJSON(confirmConnexionMessage)
+	if err != nil {
+		log.Fatalf("Could not send room joining confirmation to user %s [%s]", user.Nickname, client.roomCode)
+		return
+	}
+
+	userJoinedMessage := SendMessage{
+		Type: USER_JOINED,
+		Payload: UserJoinedMessage{
+			User: User{
+				UserName: user.Nickname,
+				Uuid:     user.Uuid,
+			},
+		},
+	}
+	go broadcastMessageToOtherClientsInRoom(userJoinedMessage, user, joinRoomMessage.RoomCode)
+}
+
+func getAllOtherClientsInRoomByRoomCode(excludedUser *rm.User, roomCode string) (foundClients []*Client) {
+	for _, user := range rm.GetAllUserFromRoomByRoomCode(roomCode) {
+		if excludedUser.Uuid == user.Uuid {
+			continue
+		}
+
+		for client, _ := range clients {
+			if user.Uuid == client.user.Uuid {
+				foundClients = append(foundClients, client)
+			}
+		}
+	}
+	return foundClients
+}
+
+func broadcastMessageToClients(message interface{}, clients []*Client) {
+	for _, client := range clients {
+		client.conn.WriteJSON(message)
+	}
+}
+
+func broadcastMessageToOtherClientsInRoom(message interface{}, user *rm.User, roomCode string) {
+	broadcastMessageToClients(message, getAllOtherClientsInRoomByRoomCode(user, roomCode))
 }
 
 // HTTP endpoint to create a new room

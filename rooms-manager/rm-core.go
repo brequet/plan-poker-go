@@ -10,12 +10,12 @@ import (
 const ROOM_CODE_SIZE = 4
 
 type User struct {
-	uuid     string
-	nickname string
+	Uuid     string
+	Nickname string
 }
 
 type Room struct {
-	users map[*User]bool
+	Users map[*User]bool
 	Name  string
 	Code  string // must be unique, can act as an ID
 }
@@ -32,7 +32,7 @@ func CreateRoom(roomName string) *Room {
 	roomCode := generateUniqueRoomCode()
 	log.Printf("Creating room with name '%s', generated code : '%s'", roomName, roomCode)
 	createdRoom := &Room{
-		users: make(map[*User]bool),
+		Users: make(map[*User]bool),
 		Name:  roomName,
 		Code:  roomCode,
 	}
@@ -50,6 +50,20 @@ func FindRoomByRoomCode(roomCode string) *Room {
 	return room
 }
 
+func GetAllUserFromRoomByRoomCode(roomCode string) (users []*User) {
+	room := FindRoomByRoomCode(roomCode)
+	if room == nil {
+		return users
+	}
+
+	for user, ok := range room.Users {
+		if ok {
+			users = append(users, user)
+		}
+	}
+	return users
+}
+
 func ConnectNewUserToRoom(nickname, roomCode string) *User { // TODO: return errors saying why user cant connect (ex: room doesn't exist)
 	room := FindRoomByRoomCode(roomCode)
 	if room == nil {
@@ -57,22 +71,21 @@ func ConnectNewUserToRoom(nickname, roomCode string) *User { // TODO: return err
 	}
 
 	newUser := createUser(nickname)
-	room.users[newUser] = true
+	room.Users[newUser] = true
 	log.Printf("User '%s' joined the room : '%s'", nickname, roomCode)
 
 	return newUser
 }
 
-func DisconnectUserFromRoom(user *User, roomCode string) bool {
+func DisconnectUserFromRoom(user *User, roomCode string) {
 	room := FindRoomByRoomCode(roomCode)
 	if room == nil {
-		return false
+		return
 	}
 
-	log.Printf("Removing user with nickname '%s', from room : '%s'", user.nickname, roomCode)
-	delete(room.users, user)
+	log.Printf("User '%s' disconnected from room '%s'", user.Nickname, roomCode)
+	delete(room.Users, user)
 	// TODO: timeout if no user left -> delete room
-	return true
 }
 
 func createUser(nickname string) *User {
@@ -80,8 +93,8 @@ func createUser(nickname string) *User {
 	uuidStr := uuid.New().String()
 	log.Printf("Creating user with nickname '%s', uuid : '%s'", nickname, uuidStr)
 	return &User{
-		nickname: nickname,
-		uuid:     uuidStr,
+		Nickname: nickname,
+		Uuid:     uuidStr,
 	}
 }
 
