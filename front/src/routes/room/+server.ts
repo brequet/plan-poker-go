@@ -5,15 +5,13 @@ import { json } from '@sveltejs/kit';
 export async function POST({ request }): Promise<any> {
 	const { roomName } = await request.json();
 	let responseData: any; //TODO: type response here on room creation
+	if (!roomName || roomName.length === 0) return json(responseData)
 	console.log('room name:', roomName);
 	try {
 		console.log('room name body post:', JSON.stringify({ roomName }));
 		const response = await fetch('http://127.0.0.1:8080/api/room', {
 			method: 'POST',
-			body: JSON.stringify({ roomName }),
-			headers: {
-				'Content-Type': 'application/json'
-			}
+			body: JSON.stringify({ roomName })
 		});
 
 		if (!response.ok) {

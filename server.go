@@ -187,6 +187,12 @@ func createRoomHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if roomData.RoomName == "" {
+		// RoomName empty, return an error response
+		http.NotFound(w, r) /// TODO: bad param
+		return
+	}
+	
 	// Create a new room with the provided room name
 	newRoom := rm.CreateRoom(roomData.RoomName)
 	log.Printf("Created room : [%s] %s\n", newRoom.Code, newRoom.Name)
@@ -209,6 +215,7 @@ func createRoomHandler(w http.ResponseWriter, r *http.Request) {
 func getRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract the room code from the URL path parameter
 	roomCode := mux.Vars(r)["roomCode"]
+	log.Printf("Received get room for room code : [%s]\n", roomCode)
 
 	// Retrieve the room from your data store using the room code
 	room := rm.FindRoomByRoomCode(roomCode)
@@ -219,19 +226,18 @@ func getRoomHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Serialize the room data to JSON
-	roomJSON, err := json.Marshal(room)
-	if err != nil {
-		// Handle error if JSON serialization fails
-		http.Error(w, "Failed to serialize room data", http.StatusInternalServerError)
-		return
+	// Respond with the room details (e.g., room ID) to the frontend
+	response := struct {
+		RoomCode string `json:"roomCode"`
+		RoomName string `json:"roomName"`
+	}{
+		RoomCode: room.Code,
+		RoomName: room.Name,
 	}
 
-	// Set the response content type to JSON
+	// Send the response back to the frontend
 	w.Header().Set("Content-Type", "application/json")
-
-	// Write the room JSON data to the response
-	w.Write(roomJSON)
+	json.NewEncoder(w).Encode(response)
 }
 
 func main() {

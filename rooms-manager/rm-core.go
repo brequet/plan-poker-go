@@ -29,6 +29,9 @@ func init() {
 }
 
 func CreateRoom(roomName string) *Room {
+	if roomName == "" {
+		return nil
+	}
 	roomCode := generateUniqueRoomCode()
 	log.Printf("Creating room with name '%s', generated code : '%s'", roomName, roomCode)
 	createdRoom := &Room{

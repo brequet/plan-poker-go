@@ -33,8 +33,8 @@
 		},
 		room: {
 			code: $page.params.room,
-			name: 'todo',
-			exist: !false // TODO: fetch and update room status at page arrival
+			name: data.room?.name,
+			exist: data.room !== undefined // TODO: fetch and update room status at page arrival
 		},
 		users: []
 	};
@@ -43,19 +43,15 @@
 		roomData.user.nickname = nickname;
 		localStorage.setItem('nickname', nickname);
 		// TODO: check with server if room exist
-		const response = await fetch('/room', {
-			method: 'POST',
-			body: JSON.stringify({ roomName: roomData.room.name }),
-			headers: {
-				'Content-Type': 'application/json'
-			}
+		const response = await fetch(`http://127.0.0.1:8080/api/room/${roomData.room.code}`, {
+			method: 'GET'
 		});
 
 		if (!response.ok) {
 			console.log('response not ok');
 		} else {
 			const { roomCode } = await response.json();
-			console.log('eheeheh', roomCode);
+			console.log('found room onNicknameChoice', roomCode);
 		}
 
 		isConnectionConfirmedByUser = true;
@@ -71,13 +67,16 @@
 				console.log('You are succesfuly connected');
 				const confirmConnectionMessage: ConfirmConnectionMessage =
 					message as ConfirmConnectionMessage;
-				roomData.users = [...confirmConnectionMessage.payload.ConnectedUsers.map((user) => { // TODO: clean + clean message.ts also (do like in message.go, send, receive, etc..)
-					const joiningUser: User = {
-						nickname: user.userName,
-						uuid: user.uuid
-					};
-					return joiningUser;
-				})];
+				roomData.users = [
+					...confirmConnectionMessage.payload.ConnectedUsers.map((user) => {
+						// TODO: clean + clean message.ts also (do like in message.go, send, receive, etc..)
+						const joiningUser: User = {
+							nickname: user.userName,
+							uuid: user.uuid
+						};
+						return joiningUser;
+					})
+				];
 				break;
 			case MessageType.USER_DISCONNECTED:
 				console.log('pelo disconnected');
@@ -112,13 +111,13 @@
 </script>
 
 <div class="container mx-auto">
-	{#if !isConnectionConfirmedByUser || roomData.user.nickname === ''}
+	{#if !roomData.room.exist}
+		<RoomNotFound roomCode={roomData.room.code} />
+	{:else if !isConnectionConfirmedByUser || roomData.user.nickname === ''}
 		<NicknameChoice
 			nickname={roomData.user.nickname}
 			on:nicknameChoice={(event) => onNicknameChoice(event.detail.nickname)}
 		/>
-	{:else if !roomData.room.exist}
-		<RoomNotFound roomCode={roomData.room.code} />
 	{:else}
 		<WebSocketConnection {...roomData} on:message={(event) => handleWsMessage(event.detail)} />
 		<PlanningPokerRoom {...roomData} />
