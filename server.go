@@ -116,7 +116,7 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 		if connectedUser != user {
 			connectedUsers = append(connectedUsers, User{
 				UserName: connectedUser.Nickname,
-				Uuid: connectedUser.Uuid,
+				Uuid:     connectedUser.Uuid,
 			})
 		}
 	}
@@ -205,13 +205,43 @@ func createRoomHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// HTTP endpoint to get a room
+func getRoomHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract the room code from the URL path parameter
+	roomCode := mux.Vars(r)["roomCode"]
+
+	// Retrieve the room from your data store using the room code
+	room := rm.FindRoomByRoomCode(roomCode)
+
+	if room == nil {
+		// Room not found, return an error response
+		http.NotFound(w, r)
+		return
+	}
+
+	// Serialize the room data to JSON
+	roomJSON, err := json.Marshal(room)
+	if err != nil {
+		// Handle error if JSON serialization fails
+		http.Error(w, "Failed to serialize room data", http.StatusInternalServerError)
+		return
+	}
+
+	// Set the response content type to JSON
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the room JSON data to the response
+	w.Write(roomJSON)
+}
+
 func main() {
 	log.Println("Server started on 127.0.0.1:8080")
 
 	router := mux.NewRouter()
 
 	router.HandleFunc("/ws", wsHandler)
-	router.HandleFunc("/api/room", createRoomHandler)
+	router.HandleFunc("/api/room", createRoomHandler).Methods("POST")
+	router.HandleFunc("/api/room/{roomCode}", getRoomHandler).Methods("GET")
 
 	/*
 		TODO: endpoint for

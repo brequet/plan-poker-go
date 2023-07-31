@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const ROOM_CODE_SIZE = 4
+const ROOM_CODE_SIZE = 4 // TODO: in conf
 
 type User struct {
 	Uuid     string

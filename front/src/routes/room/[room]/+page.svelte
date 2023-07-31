@@ -77,7 +77,7 @@
 						uuid: user.uuid
 					};
 					return joiningUser;
-				});]
+				})];
 				break;
 			case MessageType.USER_DISCONNECTED:
 				console.log('pelo disconnected');
