@@ -1,10 +1,13 @@
 package roomsmanager
 
 import (
-	"github.com/google/uuid"
+	"errors"
+	"fmt"
 	"log"
 	"math/rand"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const ROOM_CODE_SIZE = 4 // TODO: in conf
@@ -12,6 +15,7 @@ const ROOM_CODE_SIZE = 4 // TODO: in conf
 type User struct {
 	Uuid     string
 	Nickname string
+	Estimate string
 }
 
 type Room struct {
@@ -89,6 +93,19 @@ func DisconnectUserFromRoom(user *User, roomCode string) {
 	log.Printf("User '%s' disconnected from room '%s'", user.Nickname, roomCode)
 	delete(room.Users, user)
 	// TODO: timeout if no user left -> delete room
+}
+
+func SubmitEstimate(user *User, roomCode string, estimate string) (err error) {
+	room := FindRoomByRoomCode(roomCode)
+	if room == nil {
+		errMsg := fmt.Sprintf("Room [%s] not found, cannot submit user %s estimate (%s)", roomCode, user.Uuid, estimate)
+		return errors.New(errMsg)
+	}
+
+	log.Printf("User %s submitted estimate {%s} in room [%s]", user.Uuid, estimate, roomCode)
+	user.Estimate = estimate
+
+	return nil
 }
 
 func createUser(nickname string) *User {

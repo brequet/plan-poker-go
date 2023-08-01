@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+	import { webSocketConnection } from './webSocketStore';
 	import { MessageType } from './message';
 	import type { JoinRoomMessage, Message } from './message';
 
@@ -13,6 +14,7 @@
 	onMount(() => {
 		const url = 'ws://localhost:8080/ws'; // TODO: from conf file || env file
 		socket = new WebSocket(url);
+		webSocketConnection.set(socket)
 
 		socket.onopen = () => {
 			console.log('WebSocket connected!');

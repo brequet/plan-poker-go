@@ -57,7 +57,7 @@ func handleMessages(client *Client) {
 		}
 
 		switch receivedMessage.Type {
-		case JOIN_ROOM:
+		case JOIN_ROOM: // TODO: generic func(messageType, callback func)
 			var joinRoomMessage JoinRoomMessage
 			if err := json.Unmarshal(receivedMessage.Payload, &joinRoomMessage); err != nil {
 				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
@@ -65,13 +65,13 @@ func handleMessages(client *Client) {
 			}
 			onRoomJoinEvent(client, joinRoomMessage)
 
-		case USER_JOINED: // TODO: remove this event, this is an event back->front, makes no sense here
-			var userJoinedMessage UserJoinedMessage
-			if err := json.Unmarshal(receivedMessage.Payload, &userJoinedMessage); err != nil {
+		case SUBMIT_ESTIMATE:
+			var submitEstimateMessage SubmitEstimateMessage
+			if err := json.Unmarshal(receivedMessage.Payload, &submitEstimateMessage); err != nil {
 				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
 				break
 			}
-			log.Println("userJoinedMessage", userJoinedMessage)
+			onsubmitEstimateEvent(client, submitEstimateMessage)
 
 		default:
 			log.Println("Received unsupported message type:", receivedMessage.Type)
@@ -88,7 +88,7 @@ func handleDisconnection(client *Client) {
 
 		disconnectionMessage := SendMessage{
 			Type: USER_DISCONNECTED,
-			Payload: DisconnectionMessage{
+			Payload: UserDisconnectedMessage{
 				User: User{
 					UserName: client.user.Nickname,
 					Uuid:     client.user.Uuid,
@@ -103,6 +103,7 @@ func handleDisconnection(client *Client) {
 }
 
 func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo in event.go ?
+	// TODO: check if user exist (ip:port ?) -> ex: if user F5 refresh page, keep connection if possible
 	user := rm.ConnectNewUserToRoom(joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
 	if user == nil {
 		log.Fatalf("User %s could not join the room %s", joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
@@ -133,7 +134,7 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 	}
 	err := client.conn.WriteJSON(confirmConnexionMessage)
 	if err != nil {
-		log.Fatalf("Could not send room joining confirmation to user %s [%s]", user.Nickname, client.roomCode)
+		log.Fatalf("Could not send room joining confirmation to user %s [%s]: %s", user.Nickname, client.roomCode, err)
 		return
 	}
 
@@ -146,7 +147,38 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 			},
 		},
 	}
-	go broadcastMessageToOtherClientsInRoom(userJoinedMessage, user, joinRoomMessage.RoomCode)
+	go broadcastMessageToOtherClientsInRoom(userJoinedMessage, client.user, client.roomCode)
+}
+
+func onsubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateMessage) {
+	err := rm.SubmitEstimate(client.user, client.roomCode, submitEstimateMessage.Estimate)
+	if err != nil {
+		return
+	}
+
+	confirmEstimateSubmission := SendMessage{
+		Type: CONFIRM_ESTIMATE_SUBMISSION,
+		Payload: ConfirmEstimateSubmissionMessage{
+			Estimate: submitEstimateMessage.Estimate,
+		},
+	}
+	err = client.conn.WriteJSON(confirmEstimateSubmission)
+	if err != nil {
+		log.Fatalf("Could not send estimate submission confirmation to user %s [%s]: %s", client.user.Nickname, client.roomCode, err)
+		return
+	}
+
+	userSubmittedMessage := SendMessage{ //TODO: only notify that the user has voted, do not send the estimate value here !
+		Type: ESTIMATE_SUBMITTED,
+		Payload: UserSubmittedEstimate{
+			User: User{
+				UserName: client.user.Nickname,
+				Uuid:     client.user.Uuid,
+			},
+			Estimate: submitEstimateMessage.Estimate,
+		},
+	}
+	go broadcastMessageToOtherClientsInRoom(userSubmittedMessage, client.user, client.roomCode)
 }
 
 func getAllOtherClientsInRoomByRoomCode(excludedUser *rm.User, roomCode string) (foundClients []*Client) {
@@ -170,8 +202,8 @@ func broadcastMessageToClients(message interface{}, clients []*Client) {
 	}
 }
 
-func broadcastMessageToOtherClientsInRoom(message interface{}, user *rm.User, roomCode string) {
-	broadcastMessageToClients(message, getAllOtherClientsInRoomByRoomCode(user, roomCode))
+func broadcastMessageToOtherClientsInRoom(message interface{}, excludedUser *rm.User, roomCode string) {
+	broadcastMessageToClients(message, getAllOtherClientsInRoomByRoomCode(excludedUser, roomCode))
 }
 
 // HTTP endpoint to create a new room
@@ -192,19 +224,13 @@ func createRoomHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r) /// TODO: bad param
 		return
 	}
-	
+
 	// Create a new room with the provided room name
 	newRoom := rm.CreateRoom(roomData.RoomName)
 	log.Printf("Created room : [%s] %s\n", newRoom.Code, newRoom.Name)
 
 	// Respond with the room details (e.g., room ID) to the frontend
-	response := struct {
-		RoomCode string `json:"roomCode"`
-		RoomName string `json:"roomName"`
-	}{
-		RoomCode: newRoom.Code,
-		RoomName: newRoom.Name,
-	}
+	response := mapRmRoomToRoom(newRoom)
 
 	// Send the response back to the frontend
 	w.Header().Set("Content-Type", "application/json")
@@ -215,7 +241,6 @@ func createRoomHandler(w http.ResponseWriter, r *http.Request) {
 func getRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract the room code from the URL path parameter
 	roomCode := mux.Vars(r)["roomCode"]
-	log.Printf("Received get room for room code : [%s]\n", roomCode)
 
 	// Retrieve the room from your data store using the room code
 	room := rm.FindRoomByRoomCode(roomCode)
@@ -227,13 +252,7 @@ func getRoomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Respond with the room details (e.g., room ID) to the frontend
-	response := struct {
-		RoomCode string `json:"roomCode"`
-		RoomName string `json:"roomName"`
-	}{
-		RoomCode: room.Code,
-		RoomName: room.Name,
-	}
+	response := mapRmRoomToRoom(room)
 
 	// Send the response back to the frontend
 	w.Header().Set("Content-Type", "application/json")

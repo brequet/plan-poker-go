@@ -2,6 +2,7 @@ import type { Actions } from '@sveltejs/kit';
 
 export const load = async ({ cookies, params }) => {
 	const nickname = cookies.get('nickname');
+	console.log('retrieved name', nickname)
 	// TODO: fetch room info (code, name, exist ?)
 	const roomCode = params.room;
 	let room: {

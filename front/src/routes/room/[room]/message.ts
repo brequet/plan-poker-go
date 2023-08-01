@@ -6,6 +6,7 @@ enum MessageType {
 	RESET_PLANNING = 'reset_planning',
 	USER_DISCONNECTED = 'user_disconnected',
 	CONFIRM_CONNECTION = 'confirm_connection',
+	CONFIRM_ESTIMATE_SUBMISSION = 'confirm_estimate_submission'
 }
 
 interface MessageInterface {
@@ -15,6 +16,7 @@ interface MessageInterface {
 interface UserDTO {
 	userName: string;
 	uuid: string;
+	estimate: number | undefined;
 }
 
 interface UserDisconnectedMessage {
@@ -27,7 +29,7 @@ interface ConfirmConnectionMessage {
 	type: MessageType.CONFIRM_CONNECTION;
 	payload: {
 		user: UserDTO;
-		ConnectedUsers: UserDTO[]
+		ConnectedUsers: UserDTO[];
 	};
 }
 
@@ -49,8 +51,14 @@ interface UserJoinedMessage {
 interface SubmitEstimateMessage {
 	type: MessageType.SUBMIT_ESTIMATE;
 	payload: {
-		taskId: string;
-		estimate: number;
+		estimate: string;
+	};
+}
+
+interface ConfirmEstimateSubmittedMessage {
+	type: MessageType.CONFIRM_ESTIMATE_SUBMISSION;
+	payload: {
+		estimate: string;
 	};
 }
 
@@ -74,7 +82,8 @@ type Message =
 	| EstimateRevealedMessage
 	| ResetPlanningMessage
 	| UserDisconnectedMessage
-	| ConfirmConnectionMessage;
+	| ConfirmConnectionMessage
+	| ConfirmEstimateSubmittedMessage;
 
 export type {
 	Message,
@@ -84,6 +93,7 @@ export type {
 	EstimateRevealedMessage,
 	ResetPlanningMessage,
 	UserDisconnectedMessage,
-	ConfirmConnectionMessage
+	ConfirmConnectionMessage,
+	ConfirmEstimateSubmittedMessage,
 };
 export { MessageType };
