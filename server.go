@@ -122,6 +122,8 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 		}
 	}
 
+	room := rm.FindRoomByRoomCode(client.roomCode)
+
 	confirmConnexionMessage := SendMessage{
 		Type: CONFIRM_CONNECTION,
 		Payload: ConfirmConnectionMessage{
@@ -130,6 +132,10 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 				Uuid:     user.Uuid,
 			},
 			ConnectedUsers: connectedUsers,
+			Room: Room{
+				RoomCode: room.Code,
+				RoomName: room.Name,
+			},
 		},
 	}
 	err := client.conn.WriteJSON(confirmConnexionMessage)
@@ -169,7 +175,7 @@ func onsubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateM
 	}
 
 	userSubmittedMessage := SendMessage{ //TODO: only notify that the user has voted, do not send the estimate value here !
-		Type: ESTIMATE_SUBMITTED,
+		Type: USER_SUBMITTED_ESTIMATE,
 		Payload: UserSubmittedEstimate{
 			User: User{
 				UserName: client.user.Nickname,

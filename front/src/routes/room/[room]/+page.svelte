@@ -5,69 +5,66 @@
 	import PlanningPokerRoom from './PlanningPokerRoom.svelte';
 	import RoomNotFound from './RoomNotFound.svelte';
 	import WebSocketConnection from './WebSocketConnection.svelte';
+	import { MessageType, type Message } from './message';
 	import {
-		MessageType,
-		type Message,
-		type UserJoinedMessage,
-		type UserDisconnectedMessage,
-		type ConfirmConnectionMessage,
-	} from './message';
+		connectedUsersStore,
+		currentUserStore,
+		roomStore,
+		type CurrentUser,
+		type Room,
+		type User
+	} from './room';
 	import { webSocketConnection } from './webSocketStore';
 
 	export let data;
 
-	let isConnectionConfirmedByUser = false;
+	roomStore.set({
+		code: $page.params.room,
+		name: data.room?.name,
+		exist: data.room !== undefined
+	});
 
-	type User = {
-		// TODO: refactor out
-		nickname: string;
-		uuid?: string;
-		estimate?: number;
-	};
-
-	let roomData: {
-		// TODO: in store
-		user: User;
-		room: {
-			code: string;
-			name?: string;
-			exist: boolean;
-		};
-		users: User[];
-	} = {
-		user: {
-			// TODO: type, with id..
-			nickname: data.nickname ?? '',
-			uuid: undefined,
-			estimate: undefined
-		},
-		room: {
-			code: $page.params.room,
-			name: data.room?.name,
-			exist: data.room !== undefined // TODO: fetch and update room status at page arrival
-		},
-		users: []
-	};
+	currentUserStore.set({
+		nickname: data.nickname ?? '',
+		isConnected: false
+	});
 
 	let socket: WebSocket; //TODO: do something if socket becomes null (ex: server crashes)
-	const unsubscribeFromSocketWritable = webSocketConnection.subscribe((value) => (socket = value));
+	const unsubscribeFromSocketWritable = webSocketConnection.subscribe((ws) => {
+		if (ws) {
+			socket = ws;
+		}
+	});
+
+	let room: Room;
+	const unsubscribeFromRoomStore = roomStore.subscribe((roomStore) => {
+		room = roomStore;
+	});
+
+	let currentUser: CurrentUser;
+	const unsubscribeFromCurrentUserStore = currentUserStore.subscribe((currentUserStore) => {
+		currentUser = currentUserStore;
+	});
 
 	async function onNicknameChoice(nickname: string) {
-		roomData.user.nickname = nickname;
 		localStorage.setItem('nickname', nickname);
-		// TODO: check with server if room exist
-		const response = await fetch(`http://127.0.0.1:8080/api/room/${roomData.room.code}`, {
+		const response = await fetch(`http://127.0.0.1:8080/api/room/${room.code}`, {
 			method: 'GET'
 		});
 
 		if (!response.ok) {
-			console.log('response not ok');
+			console.log('onNicknameChoice response not ok');
 		} else {
-			const { roomCode } = await response.json();
-			console.log('found room onNicknameChoice', roomCode);
+			const roomInfo = await response.json();
+			const { roomCode } = roomInfo;
+			console.log('onNicknameChoice found room', roomInfo);
 		}
 
-		isConnectionConfirmedByUser = true;
+		currentUserStore.update((user) => {
+			user.isConnected = true;
+			user.nickname = nickname;
+			return user;
+		});
 	}
 
 	// TODO: validate route room name https://learn.svelte.dev/tutorial/param-matchers -> simple regex like [AZ]{4} -> 4 from env file / conf / properties
@@ -75,12 +72,28 @@
 	function handleWsMessage(message: Message) {
 		switch (message.type) {
 			case MessageType.CONFIRM_CONNECTION:
-				console.log('You are succesfuly connected');
-				const confirmConnectionMessage: ConfirmConnectionMessage =
-					message as ConfirmConnectionMessage;
-				roomData.users = [
-					...confirmConnectionMessage.payload.ConnectedUsers.map((user) => {
-						// TODO: clean + clean message.ts also (do like in message.go, send, receive, etc..)
+				console.log(
+					'You are succesfuly connected to room',
+					message.payload.room.roomCode,
+					message.payload.room.roomName
+				);
+
+				roomStore.update((room) => {
+					return {
+						...room,
+						code: message.payload.room.roomCode,
+						name: message.payload.room.roomName
+					};
+				});
+
+				currentUserStore.update((user) => {
+					user.nickname = message.payload.user.userName;
+					user.uuid = message.payload.user.uuid;
+					return user;
+				});
+
+				connectedUsersStore.set([
+					...message.payload.connectedUsers.map((user) => {
 						const joiningUser: User = {
 							nickname: user.userName,
 							uuid: user.uuid,
@@ -88,58 +101,84 @@
 						};
 						return joiningUser;
 					})
-				];
+				]);
+
 				break;
+
 			case MessageType.USER_DISCONNECTED:
 				console.log('pelo disconnected');
-				const userDisconnectedMessage: UserDisconnectedMessage = message as UserDisconnectedMessage;
-				roomData.users = roomData.users.filter(
-					(user) => user.uuid !== userDisconnectedMessage.payload.user.uuid
+				connectedUsersStore.update((connectedUsers) =>
+					connectedUsers.filter((connectedUser) => connectedUser.uuid !== message.payload.user.uuid)
 				);
 				break;
+
 			case MessageType.USER_JOINED:
 				console.log('pelo joined');
-				const userJoinedMessage: UserJoinedMessage = message as UserJoinedMessage;
 				const joiningUser: User = {
-					nickname: userJoinedMessage.payload.user.userName,
-					uuid: userJoinedMessage.payload.user.uuid,
-					estimate: userJoinedMessage.payload.user.estimate
+					nickname: message.payload.user.userName,
+					uuid: message.payload.user.uuid,
+					estimate: message.payload.user.estimate
 				};
-				roomData.users = [...roomData.users, joiningUser];
+				connectedUsersStore.update((connectedUsers) => [...connectedUsers, joiningUser]);
 				break;
+
 			case MessageType.CONFIRM_ESTIMATE_SUBMISSION:
 				console.log('You submitted succesfully !', message);
+				currentUserStore.update((currentUser) => {
+					return { ...currentUser, estimate: message.payload.estimate };
+				});
 				break;
-			case MessageType.SUBMIT_ESTIMATE:
+
+			case MessageType.USER_SUBMITTED_ESTIMATE:
+				console.log('user submitted estimate !', message);
+				connectedUsersStore.update((connectedUsers) => {
+					connectedUsers.map((u) => {
+						if (u.uuid === message.payload.user.uuid) {
+							u.estimate = message.payload.estimate;
+						}
+					});
+					return connectedUsers;
+				});
 				break;
+
 			case MessageType.ESTIMATE_REVEALED:
 				break;
+
 			case MessageType.RESET_PLANNING:
 				break;
-			default:
-				console.log('default in switch :/', message);
 
+			default:
+				console.log('default in switch (message type not handled):', message);
 				break;
 		}
 	}
 
 	// TODO: page title 'Poker Room ABCD'
 
-	onDestroy(() => unsubscribeFromSocketWritable());
+	onDestroy(() => {
+		unsubscribeFromSocketWritable();
+		unsubscribeFromRoomStore();
+		unsubscribeFromCurrentUserStore();
+	});
 </script>
 
 <div class="container mx-auto">
-	{#if !roomData.room.exist}
-		<RoomNotFound roomCode={roomData.room.code} />
-	{:else if !isConnectionConfirmedByUser || roomData.user.nickname === ''}
-		<NicknameChoice
-			nickname={roomData.user.nickname}
-			on:nicknameChoice={(event) => onNicknameChoice(event.detail.nickname)}
+	{#if !room?.exist}
+		<RoomNotFound roomCode={room.code} />
+	{:else if !currentUser?.isConnected || currentUser?.nickname === ''}
+		<NicknameChoice 
+		nickname={currentUser.nickname}
+		on:nicknameChoice={(event) => onNicknameChoice(event.detail.nickname)} 
 		/>
 	{:else}
-		<WebSocketConnection {...roomData} on:message={(event) => handleWsMessage(event.detail)} />
-		{#if socket !== null}
-			<PlanningPokerRoom {...roomData} />
+		<WebSocketConnection
+			{currentUser}
+			roomCode={room.code}
+			on:message={(event) => handleWsMessage(event.detail)}
+		/>
+		{#if socket !== null && room.name} 
+		<!-- TODO: loading while socket connecting -->
+			<PlanningPokerRoom />
 		{/if}
 	{/if}
 </div>

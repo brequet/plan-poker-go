@@ -3,9 +3,10 @@
 	import { webSocketConnection } from './webSocketStore';
 	import { MessageType } from './message';
 	import type { JoinRoomMessage, Message } from './message';
+	import type { CurrentUser } from './room';
 
-	export let user: { nickname: string };
-	export let room: { code: string };
+	export let currentUser: CurrentUser;
+	export let roomCode: string;
 
 	const dispatch = createEventDispatcher();
 
@@ -14,7 +15,7 @@
 	onMount(() => {
 		const url = 'ws://localhost:8080/ws'; // TODO: from conf file || env file
 		socket = new WebSocket(url);
-		webSocketConnection.set(socket)
+		webSocketConnection.set(socket);
 
 		socket.onopen = () => {
 			console.log('WebSocket connected!');
@@ -22,8 +23,8 @@
 			const joinRoomMessage: JoinRoomMessage = {
 				type: MessageType.JOIN_ROOM,
 				payload: {
-					roomCode: room.code,
-					nickname: user.nickname
+					roomCode: roomCode,
+					nickname: currentUser.nickname
 				}
 			};
 
@@ -41,7 +42,7 @@
 
 		socket.onclose = (event) => {
 			console.log('WebSocket connection closed:', event.code, event.reason);
-			console.log('->', event);
+			webSocketConnection.set(undefined);
 		};
 	});
 

@@ -6,7 +6,8 @@ enum MessageType {
 	RESET_PLANNING = 'reset_planning',
 	USER_DISCONNECTED = 'user_disconnected',
 	CONFIRM_CONNECTION = 'confirm_connection',
-	CONFIRM_ESTIMATE_SUBMISSION = 'confirm_estimate_submission'
+	CONFIRM_ESTIMATE_SUBMISSION = 'confirm_estimate_submission',
+	USER_SUBMITTED_ESTIMATE = 'user_submitted_estimate'
 }
 
 interface MessageInterface {
@@ -16,35 +17,21 @@ interface MessageInterface {
 interface UserDTO {
 	userName: string;
 	uuid: string;
-	estimate: number | undefined;
+	estimate: string;
 }
 
-interface UserDisconnectedMessage {
-	type: MessageType.USER_DISCONNECTED;
-	payload: {
-		user: UserDTO;
-	};
+interface RoomDTO {
+	roomCode: string;
+	roomName: string;
 }
-interface ConfirmConnectionMessage {
-	type: MessageType.CONFIRM_CONNECTION;
-	payload: {
-		user: UserDTO;
-		ConnectedUsers: UserDTO[];
-	};
-}
+
+// sended
 
 interface JoinRoomMessage extends MessageInterface {
 	type: MessageType.JOIN_ROOM;
 	payload: {
 		roomCode: string;
 		nickname: string;
-	};
-}
-
-interface UserJoinedMessage {
-	type: MessageType.USER_JOINED;
-	payload: {
-		user: UserDTO;
 	};
 }
 
@@ -55,10 +42,43 @@ interface SubmitEstimateMessage {
 	};
 }
 
+// received
+
+interface ConfirmConnectionMessage {
+	type: MessageType.CONFIRM_CONNECTION;
+	payload: {
+		user: UserDTO;
+		connectedUsers: UserDTO[];
+		room: RoomDTO;
+	};
+}
+
+interface UserDisconnectedMessage {
+	type: MessageType.USER_DISCONNECTED;
+	payload: {
+		user: UserDTO;
+	};
+}
+
+interface UserJoinedMessage {
+	type: MessageType.USER_JOINED;
+	payload: {
+		user: UserDTO;
+	};
+}
+
 interface ConfirmEstimateSubmittedMessage {
 	type: MessageType.CONFIRM_ESTIMATE_SUBMISSION;
 	payload: {
 		estimate: string;
+	};
+}
+
+interface UserSubmittedEstimateMessage {
+	type: MessageType.USER_SUBMITTED_ESTIMATE;
+	payload: {
+		estimate: string;
+		user: UserDTO;
 	};
 }
 
@@ -83,17 +103,9 @@ type Message =
 	| ResetPlanningMessage
 	| UserDisconnectedMessage
 	| ConfirmConnectionMessage
-	| ConfirmEstimateSubmittedMessage;
+	| ConfirmEstimateSubmittedMessage
+	| UserSubmittedEstimateMessage;
 
-export type {
-	Message,
-	JoinRoomMessage,
-	UserJoinedMessage,
-	SubmitEstimateMessage,
-	EstimateRevealedMessage,
-	ResetPlanningMessage,
-	UserDisconnectedMessage,
-	ConfirmConnectionMessage,
-	ConfirmEstimateSubmittedMessage,
-};
 export { MessageType };
+export type { JoinRoomMessage, Message, SubmitEstimateMessage };
+

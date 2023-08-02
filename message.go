@@ -51,6 +51,7 @@ const (
 	USER_DISCONNECTED           MessageType = "user_disconnected"
 	CONFIRM_CONNECTION          MessageType = "confirm_connection"
 	CONFIRM_ESTIMATE_SUBMISSION MessageType = "confirm_estimate_submission"
+	USER_SUBMITTED_ESTIMATE     MessageType = "user_submitted_estimate"
 	ESTIMATE_SUBMITTED          MessageType = "estimate_submitted"
 	ESTIMATE_REVEALED           MessageType = "estimate_revealed"
 	RESET_PLANNING              MessageType = "reset_planning"
@@ -71,7 +72,8 @@ type UserDisconnectedMessage struct {
 
 type ConfirmConnectionMessage struct {
 	User           User   `json:"user"`
-	ConnectedUsers []User `json:"ConnectedUsers"`
+	ConnectedUsers []User `json:"connectedUsers"`
+	Room           Room   `json:"room"`
 }
 
 type ConfirmEstimateSubmissionMessage struct {
