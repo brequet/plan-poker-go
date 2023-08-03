@@ -2,8 +2,10 @@ enum MessageType {
 	JOIN_ROOM = 'join_room',
 	USER_JOINED = 'user_joined',
 	SUBMIT_ESTIMATE = 'submit_estimate',
+	REVEAL_ESTIMATE = 'reveal_estimate',
 	ESTIMATE_REVEALED = 'estimate_revealed',
 	RESET_PLANNING = 'reset_planning',
+	PLANNING_RESETED = 'planning_reseted',
 	USER_DISCONNECTED = 'user_disconnected',
 	CONFIRM_CONNECTION = 'confirm_connection',
 	CONFIRM_ESTIMATE_SUBMISSION = 'confirm_estimate_submission',
@@ -23,6 +25,7 @@ interface UserDTO {
 interface RoomDTO {
 	roomCode: string;
 	roomName: string;
+	isEstimateRevealed: boolean;
 }
 
 // sended
@@ -40,6 +43,17 @@ interface SubmitEstimateMessage {
 	payload: {
 		estimate: string;
 	};
+}
+
+interface RevealEstimateMessage {
+	type: MessageType.REVEAL_ESTIMATE;
+	payload: {
+		shouldReveal: boolean;
+	};
+}
+
+interface ResetPlanningMessage {
+	type: MessageType.RESET_PLANNING;
 }
 
 // received
@@ -89,9 +103,8 @@ interface EstimateRevealedMessage {
 	};
 }
 
-interface ResetPlanningMessage {
-	type: MessageType.RESET_PLANNING;
-	payload: null;
+interface PlanningResetedMessage {
+	type: MessageType.PLANNING_RESETED;
 }
 
 // Define a union type for all possible message types
@@ -104,8 +117,12 @@ type Message =
 	| UserDisconnectedMessage
 	| ConfirmConnectionMessage
 	| ConfirmEstimateSubmittedMessage
-	| UserSubmittedEstimateMessage;
+	| UserSubmittedEstimateMessage
+	| RevealEstimateMessage
+	| PlanningResetedMessage;
 
 export { MessageType };
-export type { JoinRoomMessage, Message, SubmitEstimateMessage };
+export type { JoinRoomMessage, Message, SubmitEstimateMessage, RevealEstimateMessage, ResetPlanningMessage };
+
+//TODO: refactor/clean this file
 

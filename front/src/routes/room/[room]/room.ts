@@ -15,6 +15,7 @@ export type Room = {
 	code: string;
 	name?: string;
 	exist: boolean;
+	isEstimateRevealed: boolean;
 };
 
 export const roomStore: Writable<Room> = writable();

@@ -19,9 +19,10 @@ type User struct {
 }
 
 type Room struct {
-	Users map[*User]bool
-	Name  string
-	Code  string // must be unique, can act as an ID
+	Users              map[*User]bool
+	Name               string
+	Code               string // must be unique, can act as an ID
+	IsEstimateRevealed bool
 }
 
 var rooms = make(map[string]*Room)
@@ -39,9 +40,10 @@ func CreateRoom(roomName string) *Room {
 	roomCode := generateUniqueRoomCode()
 	log.Printf("Creating room with name '%s', generated code : '%s'", roomName, roomCode)
 	createdRoom := &Room{
-		Users: make(map[*User]bool),
-		Name:  roomName,
-		Code:  roomCode,
+		Users:              make(map[*User]bool),
+		Name:               roomName,
+		Code:               roomCode,
+		IsEstimateRevealed: false,
 	}
 	rooms[roomCode] = createdRoom
 	return createdRoom
@@ -104,6 +106,36 @@ func SubmitEstimate(user *User, roomCode string, estimate string) (err error) {
 
 	log.Printf("User %s submitted estimate {%s} in room [%s]", user.Uuid, estimate, roomCode)
 	user.Estimate = estimate
+
+	return nil
+}
+
+func ToggleShouldRevealEstimateForRoom(roomCode string) (bool, error) {
+	room := FindRoomByRoomCode(roomCode)
+	if room == nil {
+		errMsg := fmt.Sprintf("Room [%s] not found, cannot toggle estimate reveal", roomCode)
+		return false, errors.New(errMsg)
+	}
+
+	room.IsEstimateRevealed = !room.IsEstimateRevealed
+	log.Printf("Toggled estimate reveal to '%t' for room [%s]", room.IsEstimateRevealed, roomCode)
+
+	return room.IsEstimateRevealed, nil
+}
+
+func ResetPlanningForRoom(roomCode string)  error {
+	room := FindRoomByRoomCode(roomCode)
+	if room == nil {
+		errMsg := fmt.Sprintf("Room [%s] not found, cannot reset planning", roomCode)
+		return errors.New(errMsg)
+	}
+
+	room.IsEstimateRevealed = false
+	for user := range room.Users {
+		user.Estimate = ""
+	}
+	
+	log.Printf("Reseted planning for room [%s]", roomCode)
 
 	return nil
 }

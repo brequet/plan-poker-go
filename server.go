@@ -71,7 +71,18 @@ func handleMessages(client *Client) {
 				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
 				break
 			}
-			onsubmitEstimateEvent(client, submitEstimateMessage)
+			onSubmitEstimateEvent(client, submitEstimateMessage)
+
+		case REVEAL_ESTIMATE:
+			var revealEstimateMessage RevealEstimateMessage
+			if err := json.Unmarshal(receivedMessage.Payload, &revealEstimateMessage); err != nil {
+				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
+				break
+			}
+			onRevealEstimateEvent(client, revealEstimateMessage)
+
+		case RESET_PLANNING:
+			onResetPlanningEvent(client)
 
 		default:
 			log.Println("Received unsupported message type:", receivedMessage.Type)
@@ -118,6 +129,7 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 			connectedUsers = append(connectedUsers, User{
 				UserName: connectedUser.Nickname,
 				Uuid:     connectedUser.Uuid,
+				Estimate: connectedUser.Estimate,
 			})
 		}
 	}
@@ -133,8 +145,9 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 			},
 			ConnectedUsers: connectedUsers,
 			Room: Room{
-				RoomCode: room.Code,
-				RoomName: room.Name,
+				RoomCode:           room.Code,
+				RoomName:           room.Name,
+				IsEstimateRevealed: room.IsEstimateRevealed,
 			},
 		},
 	}
@@ -156,7 +169,7 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 	go broadcastMessageToOtherClientsInRoom(userJoinedMessage, client.user, client.roomCode)
 }
 
-func onsubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateMessage) {
+func onSubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateMessage) {
 	err := rm.SubmitEstimate(client.user, client.roomCode, submitEstimateMessage.Estimate)
 	if err != nil {
 		return
@@ -174,7 +187,7 @@ func onsubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateM
 		return
 	}
 
-	userSubmittedMessage := SendMessage{ //TODO: only notify that the user has voted, do not send the estimate value here !
+	userSubmittedMessage := SendMessage{
 		Type: USER_SUBMITTED_ESTIMATE,
 		Payload: UserSubmittedEstimate{
 			User: User{
@@ -185,6 +198,47 @@ func onsubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateM
 		},
 	}
 	go broadcastMessageToOtherClientsInRoom(userSubmittedMessage, client.user, client.roomCode)
+}
+
+func onRevealEstimateEvent(client *Client, revealEstimateMessage RevealEstimateMessage) {
+	newShouldRevealEstimate, err := rm.ToggleShouldRevealEstimateForRoom(client.roomCode)
+	if err != nil {
+		log.Fatalf("Could not reveal estimates for room [%s]: %s", client.roomCode, err)
+		return
+	}
+
+	revealEstimateMessageToSend := SendMessage{
+		Type: REVEAL_ESTIMATE,
+		Payload: RevealEstimateMessage{
+			ShouldReveal: newShouldRevealEstimate,
+		},
+	}
+	go broadcastMessageToAllClientsInRoom(revealEstimateMessageToSend, client.roomCode)
+}
+
+func onResetPlanningEvent(client *Client) {
+	err := rm.ResetPlanningForRoom(client.roomCode)
+	if err != nil {
+		log.Fatalf("Could not reset planning for room [%s]: %s", client.roomCode, err)
+		return
+	}
+
+	planningResetMessage := SendMessage{
+		Type:    PLANNING_RESETED,
+		Payload: PlanningResetedMessage{},
+	}
+	go broadcastMessageToAllClientsInRoom(planningResetMessage, client.roomCode)
+}
+
+func getAllClientsInRoomByRoomCode(roomCode string) (foundClients []*Client) {
+	for _, user := range rm.GetAllUserFromRoomByRoomCode(roomCode) {
+		for client, _ := range clients {
+			if user.Uuid == client.user.Uuid {
+				foundClients = append(foundClients, client)
+			}
+		}
+	}
+	return foundClients
 }
 
 func getAllOtherClientsInRoomByRoomCode(excludedUser *rm.User, roomCode string) (foundClients []*Client) {
@@ -206,6 +260,10 @@ func broadcastMessageToClients(message interface{}, clients []*Client) {
 	for _, client := range clients {
 		client.conn.WriteJSON(message)
 	}
+}
+
+func broadcastMessageToAllClientsInRoom(message interface{}, roomCode string) {
+	broadcastMessageToClients(message, getAllClientsInRoomByRoomCode(roomCode))
 }
 
 func broadcastMessageToOtherClientsInRoom(message interface{}, excludedUser *rm.User, roomCode string) {

@@ -15,13 +15,15 @@
 		type User
 	} from './room';
 	import { webSocketConnection } from './webSocketStore';
+	import Layout from '../../+layout.svelte';
 
 	export let data;
 
 	roomStore.set({
 		code: $page.params.room,
 		name: data.room?.name,
-		exist: data.room !== undefined
+		exist: data.room !== undefined,
+		isEstimateRevealed: false,
 	});
 
 	currentUserStore.set({
@@ -82,7 +84,8 @@
 					return {
 						...room,
 						code: message.payload.room.roomCode,
-						name: message.payload.room.roomName
+						name: message.payload.room.roomName,
+						isEstimateRevealed: message.payload.room.isEstimateRevealed
 					};
 				});
 
@@ -141,10 +144,27 @@
 				});
 				break;
 
-			case MessageType.ESTIMATE_REVEALED:
+			case MessageType.REVEAL_ESTIMATE: // TODO use ESTIMATE_REVEAL (1 direction per message type)
+				console.log('Reveal estimate toggled !', message);
+				roomStore.update(room => {
+					return {...room, isEstimateRevealed: message.payload.shouldReveal}
+				})
 				break;
 
-			case MessageType.RESET_PLANNING:
+			case MessageType.PLANNING_RESETED:
+				roomStore.update(room => {
+					return {...room, isEstimateRevealed: false}
+				});
+
+				currentUserStore.update(user => {
+					return {...user, estimate: undefined}
+				})
+
+				connectedUsersStore.update(users => {
+					return users.map(user => {
+						return {...user, estimate: undefined}
+					});
+				})
 				break;
 
 			default:

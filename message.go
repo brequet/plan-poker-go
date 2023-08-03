@@ -9,14 +9,28 @@ import (
 type User struct {
 	UserName string `json:"userName"`
 	Uuid     string `json:"uuid"`
+	Estimate string `json:"estimate"`
 }
 
 type Room struct {
-	RoomCode string `json:"roomCode"`
-	RoomName string `json:"roomName"`
+	RoomCode           string `json:"roomCode"`
+	RoomName           string `json:"roomName"`
+	IsEstimateRevealed bool   `json:"isEstimateRevealed"`
 }
 
 type MessageType string
+
+/*
+	Both received and send message
+*/
+
+const (
+	REVEAL_ESTIMATE MessageType = "reveal_estimate"
+)
+
+type RevealEstimateMessage struct {
+	ShouldReveal bool `json:"shouldReveal"`
+}
 
 /*
 	Received messages
@@ -25,6 +39,7 @@ type MessageType string
 const (
 	JOIN_ROOM       MessageType = "join_room"
 	SUBMIT_ESTIMATE MessageType = "submit_estimate"
+	RESET_PLANNING  MessageType = "reset_planning"
 )
 
 type ReceiveMessage struct {
@@ -38,8 +53,10 @@ type JoinRoomMessage struct {
 }
 
 type SubmitEstimateMessage struct {
-	// TaskId   string `json:"taskId"`
 	Estimate string `json:"estimate"`
+}
+
+type ResetPlanningMessage struct {
 }
 
 /*
@@ -54,7 +71,7 @@ const (
 	USER_SUBMITTED_ESTIMATE     MessageType = "user_submitted_estimate"
 	ESTIMATE_SUBMITTED          MessageType = "estimate_submitted"
 	ESTIMATE_REVEALED           MessageType = "estimate_revealed"
-	RESET_PLANNING              MessageType = "reset_planning"
+	PLANNING_RESETED            MessageType = "planning_reseted"
 )
 
 type SendMessage struct {
@@ -83,6 +100,9 @@ type ConfirmEstimateSubmissionMessage struct {
 type UserSubmittedEstimate struct {
 	User     User   `json:"user"`
 	Estimate string `json:"estimate"`
+}
+
+type PlanningResetedMessage struct {
 }
 
 func mapRmRoomToRoom(rmRoom *rm.Room) *Room {
