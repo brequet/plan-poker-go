@@ -23,6 +23,7 @@ type Room struct {
 	Name               string
 	Code               string // must be unique, can act as an ID
 	IsEstimateRevealed bool
+	lastUpdated        time.Time
 }
 
 var rooms = make(map[string]*Room)
@@ -31,6 +32,7 @@ var letters = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	startRoomCleanup()
 }
 
 func CreateRoom(roomName string) *Room {
@@ -44,10 +46,10 @@ func CreateRoom(roomName string) *Room {
 		Name:               roomName,
 		Code:               roomCode,
 		IsEstimateRevealed: false,
+		lastUpdated:        time.Now(),
 	}
 	rooms[roomCode] = createdRoom
 	return createdRoom
-	// TODO: timeout 5min no one connected -> delete room
 }
 
 func FindRoomByRoomCode(roomCode string) *Room {
@@ -81,6 +83,7 @@ func ConnectNewUserToRoom(nickname, roomCode string) *User { // TODO: return err
 
 	newUser := createUser(nickname)
 	room.Users[newUser] = true
+	room.lastUpdated = time.Now()
 	log.Printf("User '%s' joined the room : '%s'", nickname, roomCode)
 
 	return newUser
@@ -92,6 +95,8 @@ func DisconnectUserFromRoom(user *User, roomCode string) {
 		return
 	}
 
+	room.lastUpdated = time.Now()
+	
 	log.Printf("User '%s' disconnected from room '%s'", user.Nickname, roomCode)
 	delete(room.Users, user)
 	// TODO: timeout if no user left -> delete room
@@ -103,6 +108,8 @@ func SubmitEstimate(user *User, roomCode string, estimate string) (err error) {
 		errMsg := fmt.Sprintf("Room [%s] not found, cannot submit user %s estimate (%s)", roomCode, user.Uuid, estimate)
 		return errors.New(errMsg)
 	}
+
+	room.lastUpdated = time.Now()
 
 	log.Printf("User %s submitted estimate {%s} in room [%s]", user.Uuid, estimate, roomCode)
 	user.Estimate = estimate
@@ -117,24 +124,26 @@ func ToggleShouldRevealEstimateForRoom(roomCode string) (bool, error) {
 		return false, errors.New(errMsg)
 	}
 
+	room.lastUpdated = time.Now()
 	room.IsEstimateRevealed = !room.IsEstimateRevealed
 	log.Printf("Toggled estimate reveal to '%t' for room [%s]", room.IsEstimateRevealed, roomCode)
 
 	return room.IsEstimateRevealed, nil
 }
 
-func ResetPlanningForRoom(roomCode string)  error {
+func ResetPlanningForRoom(roomCode string) error {
 	room := FindRoomByRoomCode(roomCode)
 	if room == nil {
 		errMsg := fmt.Sprintf("Room [%s] not found, cannot reset planning", roomCode)
 		return errors.New(errMsg)
 	}
 
+	room.lastUpdated = time.Now()
 	room.IsEstimateRevealed = false
 	for user := range room.Users {
 		user.Estimate = ""
 	}
-	
+
 	log.Printf("Reseted planning for room [%s]", roomCode)
 
 	return nil
@@ -167,4 +176,30 @@ func generateRoomCode() string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+func startRoomCleanup() {
+	// Define a ticker to run the cleanup at a regular interval
+	ticker := time.NewTicker(time.Minute * 1) // Adjust the interval as needed
+
+	// Run the cleanup routine in a goroutine
+	go func() {
+		for range ticker.C {
+			cleanupEmptyRooms()
+		}
+	}()
+}
+
+func cleanupEmptyRooms() {
+	currentTimestamp := time.Now()
+
+	maxIdleDuration := time.Minute * 5
+
+	// Iterate over the rooms and remove those that are empty and idle for too long
+	for roomCode, room := range rooms {
+		if len(room.Users) == 0 && currentTimestamp.Sub(room.lastUpdated) > maxIdleDuration {
+			delete(rooms, roomCode)
+			log.Printf("Deleted room [%s] due to inactivity", roomCode)
+		}
+	}
 }
