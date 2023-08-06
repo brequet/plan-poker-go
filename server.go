@@ -60,7 +60,7 @@ func handleMessages(client *Client) {
 		case JOIN_ROOM: // TODO: generic func(messageType, callback func)
 			var joinRoomMessage JoinRoomMessage
 			if err := json.Unmarshal(receivedMessage.Payload, &joinRoomMessage); err != nil {
-				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
+				log.Printf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
 				break
 			}
 			onRoomJoinEvent(client, joinRoomMessage)
@@ -68,7 +68,7 @@ func handleMessages(client *Client) {
 		case SUBMIT_ESTIMATE:
 			var submitEstimateMessage SubmitEstimateMessage
 			if err := json.Unmarshal(receivedMessage.Payload, &submitEstimateMessage); err != nil {
-				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
+				log.Printf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
 				break
 			}
 			onSubmitEstimateEvent(client, submitEstimateMessage)
@@ -76,7 +76,7 @@ func handleMessages(client *Client) {
 		case REVEAL_ESTIMATE:
 			var revealEstimateMessage RevealEstimateMessage
 			if err := json.Unmarshal(receivedMessage.Payload, &revealEstimateMessage); err != nil {
-				log.Fatalf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
+				log.Printf("Could not unmarshal %s message for message type: %s", receivedMessage.Type, err)
 				break
 			}
 			onRevealEstimateEvent(client, revealEstimateMessage)
@@ -117,7 +117,7 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 	// TODO: check if user exist (ip:port ?) -> ex: if user F5 refresh page, keep connection if possible
 	user := rm.ConnectNewUserToRoom(joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
 	if user == nil {
-		log.Fatalf("User %s could not join the room %s", joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
+		log.Printf("User %s could not join the room %s", joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
 		return
 	}
 	client.roomCode = joinRoomMessage.RoomCode
@@ -153,7 +153,7 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 	}
 	err := client.conn.WriteJSON(confirmConnexionMessage)
 	if err != nil {
-		log.Fatalf("Could not send room joining confirmation to user %s [%s]: %s", user.Nickname, client.roomCode, err)
+		log.Printf("Could not send room joining confirmation to user %s [%s]: %s", user.Nickname, client.roomCode, err)
 		return
 	}
 
@@ -183,7 +183,7 @@ func onSubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateM
 	}
 	err = client.conn.WriteJSON(confirmEstimateSubmission)
 	if err != nil {
-		log.Fatalf("Could not send estimate submission confirmation to user %s [%s]: %s", client.user.Nickname, client.roomCode, err)
+		log.Printf("Could not send estimate submission confirmation to user %s [%s]: %s", client.user.Nickname, client.roomCode, err)
 		return
 	}
 
@@ -203,7 +203,7 @@ func onSubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateM
 func onRevealEstimateEvent(client *Client, revealEstimateMessage RevealEstimateMessage) {
 	newShouldRevealEstimate, err := rm.ToggleShouldRevealEstimateForRoom(client.roomCode)
 	if err != nil {
-		log.Fatalf("Could not reveal estimates for room [%s]: %s", client.roomCode, err)
+		log.Printf("Could not reveal estimates for room [%s]: %s", client.roomCode, err)
 		return
 	}
 
@@ -219,7 +219,7 @@ func onRevealEstimateEvent(client *Client, revealEstimateMessage RevealEstimateM
 func onResetPlanningEvent(client *Client) {
 	err := rm.ResetPlanningForRoom(client.roomCode)
 	if err != nil {
-		log.Fatalf("Could not reset planning for room [%s]: %s", client.roomCode, err)
+		log.Printf("Could not reset planning for room [%s]: %s", client.roomCode, err)
 		return
 	}
 
