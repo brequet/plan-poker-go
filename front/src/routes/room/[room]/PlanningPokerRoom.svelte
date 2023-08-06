@@ -82,13 +82,6 @@
 		socket.send(JSON.stringify(revealEstimateMessagge));
 	}
 
-	onDestroy(() => {
-		unsubscribeFromSocketWritable();
-		unsubscribeFromRoomStore();
-		unsubscribeFromCurrentUserStore();
-		unsubscribeFromConnectedUsersStore();
-	});
-
 	function resetPlanning(): void {
 		console.log('resetPlanning');
 		const resetPlanningMessage: ResetPlanningMessage = {
@@ -97,18 +90,43 @@
 
 		socket.send(JSON.stringify(resetPlanningMessage));
 	}
+
+	function computeEstimateAverage(estimates: string[]): number {
+		let validEstimatesCount = 0;
+		let totalEstimate = 0;
+
+		for (const estimate of estimates) {
+			// Try parsing the estimate as a number
+			const numericEstimate = parseInt(estimate);
+
+			// Check if the parsed value is a valid number
+			if (!isNaN(numericEstimate)) {
+				totalEstimate += numericEstimate;
+				validEstimatesCount++;
+			}
+		}
+
+		if (validEstimatesCount === 0) {
+			return 0;
+		}
+
+		return totalEstimate / validEstimatesCount;
+	}
+
+	onDestroy(() => {
+		unsubscribeFromSocketWritable();
+		unsubscribeFromRoomStore();
+		unsubscribeFromCurrentUserStore();
+		unsubscribeFromConnectedUsersStore();
+	});
 </script>
 
-<!-- Room Details -->
-<div class="bg-white p-4 rounded-lg shadow mb-4">
-	<h2 class="text-2xl font-bold mb-2">Room Details</h2>
-	<p class="text-gray-600">Room Name: {room.name} [{room.code}]</p>
-</div>
-
-<!-- Users in the Room -->
 <!-- TODO rework UI + add average etc. -->
-<div class="bg-white p-4 rounded-lg shadow mb-4">
-	<h2 class="text-2xl font-bold mb-2">Users in the Room</h2>
+<div class="bg-white p-4 rounded-lg shadow mb-4 flex-1">
+
+	<h2 class="text-2xl font-bold mb-2">{room.name}</h2>
+
+	<h3 class="text-xl font-bold mb-2">Users in the Room</h3>
 	<ul class="list-disc pl-6">
 		<li>
 			{currentUser.nickname} (me) :
@@ -132,14 +150,17 @@
 </div>
 
 <!-- Poker Planning Interface -->
-<div class="bg-white p-4 rounded-lg shadow">
-	<h2 class="text-2xl font-bold mb-2">Poker Planning</h2>
+<div class="p-4">
 	<p class="text-gray-600">Select your estimate:</p>
 	<div class="grid grid-cols-10 gap-4 mt-4">
 		{#each votingOptions as votingOption}
 			<button
-				class="bg-blue-500 hover:bg-blue-600 text-white text-center py-2 rounded-lg cursor-pointer
-				{votingOption === selectedEstimate ? 'bg-blue-700 hover:bg-blue-800' : ''}"
+				class="border border-blue-500 text-center py-2 h-16 rounded-lg cursor-pointer
+			{votingOption === selectedEstimate
+					? 'bg-blue-500 text-white -translate-y-2 hover:bg-blue-200 hover:text-black'
+					: 'bg-white translate-y-0 hover:bg-blue-100'}
+			  hover:-translate-y-2
+			transition-transform duration-300 transform"
 				on:click={() => submitEstimate(votingOption)}
 			>
 				{votingOption}
@@ -159,15 +180,16 @@
 			class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg cursor-pointer mt-4 w-full"
 			on:click={() => resetPlanning()}
 		>
-			Reset estimates !
+			Reset estimates ! (next issue TODO)
 		</button>
 	{:else}
 		<button
 			class="{allUsersVoted
 				? 'bg-green-500 hover:bg-green-600'
-				: 'bg-orange-500 hover:bg-orange-600'} 
-		 text-white py-2 px-4 rounded-lg cursor-pointer mt-4 w-full"
+				: 'bg-orange-500 hover:bg-orange-600'}
+		 text-white py-2 px-4 rounded-lg cursor-pointer mt-4 w-full disabled:bg-gray-400 disabled:cursor-default"
 			on:click={() => toggleVotedEstimate()}
+			disabled={countNumberOfVote === 0}
 		>
 			Reveal Voted Estimates
 			{allUsersVoted

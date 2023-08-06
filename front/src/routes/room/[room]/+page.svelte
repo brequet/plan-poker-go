@@ -23,7 +23,7 @@
 		code: $page.params.room,
 		name: data.room?.name,
 		exist: data.room !== undefined,
-		isEstimateRevealed: false,
+		isEstimateRevealed: false
 	});
 
 	currentUserStore.set({
@@ -56,17 +56,20 @@
 
 		if (!response.ok) {
 			console.log('onNicknameChoice response not ok');
+			roomStore.update((room) => {
+				return { ...room, exist: false };
+			});
 		} else {
 			const roomInfo = await response.json();
 			const { roomCode } = roomInfo;
 			console.log('onNicknameChoice found room', roomInfo);
-		}
 
-		currentUserStore.update((user) => {
-			user.isConnected = true;
-			user.nickname = nickname;
-			return user;
-		});
+			currentUserStore.update((user) => {
+				user.isConnected = true;
+				user.nickname = nickname;
+				return user;
+			});
+		}
 	}
 
 	// TODO: validate route room name https://learn.svelte.dev/tutorial/param-matchers -> simple regex like [AZ]{4} -> 4 from env file / conf / properties
@@ -146,25 +149,25 @@
 
 			case MessageType.REVEAL_ESTIMATE: // TODO use ESTIMATE_REVEAL (1 direction per message type)
 				console.log('Reveal estimate toggled !', message);
-				roomStore.update(room => {
-					return {...room, isEstimateRevealed: message.payload.shouldReveal}
-				})
+				roomStore.update((room) => {
+					return { ...room, isEstimateRevealed: message.payload.shouldReveal };
+				});
 				break;
 
 			case MessageType.PLANNING_RESETED:
-				roomStore.update(room => {
-					return {...room, isEstimateRevealed: false}
+				roomStore.update((room) => {
+					return { ...room, isEstimateRevealed: false };
 				});
 
-				currentUserStore.update(user => {
-					return {...user, estimate: undefined}
-				})
+				currentUserStore.update((user) => {
+					return { ...user, estimate: undefined };
+				});
 
-				connectedUsersStore.update(users => {
-					return users.map(user => {
-						return {...user, estimate: undefined}
+				connectedUsersStore.update((users) => {
+					return users.map((user) => {
+						return { ...user, estimate: undefined };
 					});
-				})
+				});
 				break;
 
 			default:
@@ -182,13 +185,13 @@
 	});
 </script>
 
-<div class="container mx-auto">
+<div class="container mx-auto h-full flex flex-col">
 	{#if !room?.exist}
 		<RoomNotFound roomCode={room.code} />
 	{:else if !currentUser?.isConnected || currentUser?.nickname === ''}
-		<NicknameChoice 
-		nickname={currentUser.nickname}
-		on:nicknameChoice={(event) => onNicknameChoice(event.detail.nickname)} 
+		<NicknameChoice
+			nickname={currentUser.nickname}
+			on:nicknameChoice={(event) => onNicknameChoice(event.detail.nickname)}
 		/>
 	{:else}
 		<WebSocketConnection
@@ -196,8 +199,8 @@
 			roomCode={room.code}
 			on:message={(event) => handleWsMessage(event.detail)}
 		/>
-		{#if socket !== null && room.name} 
-		<!-- TODO: loading while socket connecting -->
+		{#if socket !== null && room.name}
+			<!-- TODO: loading while socket connecting -->
 			<PlanningPokerRoom />
 		{/if}
 	{/if}
