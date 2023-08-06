@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { CheckCircleIcon, CircleDashedIcon } from 'lucide-svelte';
+	import { minidenticon } from 'minidenticons';
 	import { onDestroy } from 'svelte';
 	import {
 		MessageType,
@@ -121,31 +123,54 @@
 	});
 </script>
 
-<!-- TODO rework UI + add average etc. -->
 <div class="bg-white p-4 rounded-lg shadow mb-4 flex-1">
-
-	<h2 class="text-2xl font-bold mb-2">{room.name}</h2>
+	<h2 class="text-2xl font-bold mb-2">Room: {room.name}</h2>
 
 	<h3 class="text-xl font-bold mb-2">Users in the Room</h3>
+	<!-- TODO cut in half, left for users, right for stats (average..) -->
 	<ul class="list-disc pl-6">
-		<li>
-			{currentUser.nickname} (me) :
-			{#if room.isEstimateRevealed}
-				{currentUser.estimate ? currentUser.estimate : "didn't voted"}
-			{:else}
-				{currentUser.estimate ? 'has voted' : 'is voting..'}
-			{/if}
-		</li>
-		{#each connectedUsers as connectedUser}
-			<li>
-				{connectedUser.nickname} :
-				{#if room.isEstimateRevealed}
-					{connectedUser.estimate ? connectedUser.estimate : "didn't voted"}
-				{:else}
-					{connectedUser.estimate ? 'has voted' : 'is voting..'}
-				{/if}
-			</li>
-		{/each}
+		{#if connectedUsers.length === 0}
+			Feeling lonely TODO ?
+		{:else}
+			{#each connectedUsers as connectedUser}
+				<li class="flex items-center py-2 border-b border-gray-200">
+					<div class="w-12 h-12 flex-shrink-0">
+						<img
+							class="w-full h-full rounded-full object-cover"
+							src={`data:image/svg+xml;utf8,${encodeURIComponent(
+								minidenticon(connectedUser.nickname, undefined, undefined)
+							)}`}
+							alt={connectedUser.nickname}
+						/>
+					</div>
+					<div class="ml-4">
+						<p class="font-semibold">{connectedUser.nickname}</p>
+						<p class="text-gray-500">
+							{#if room.isEstimateRevealed}
+								<!-- SHOULD SHOW USER ESTIMATE -->
+								{#if connectedUser.estimate}
+									<span>{connectedUser.estimate}</span>
+								{:else}
+									<span>Didn't vote yet...</span>
+								{/if}
+							{:else}
+								<!-- SHOULD HIDE USER ESTIMATE -->
+								{#if connectedUser.estimate}
+									<span>Is ready !</span>
+								{:else}
+									<span>Is still voting...</span>
+								{/if}
+							{/if}
+						</p>
+					</div>
+					{#if connectedUser.estimate}
+						<CheckCircleIcon class="ml-auto" color="green" />
+					{:else}
+						<CircleDashedIcon class="ml-auto" color="orange" />
+					{/if}
+				</li>
+			{/each}
+		{/if}
 	</ul>
 </div>
 
@@ -156,11 +181,11 @@
 		{#each votingOptions as votingOption}
 			<button
 				class="border border-blue-500 text-center py-2 h-16 rounded-lg cursor-pointer
-			{votingOption === selectedEstimate
+					{votingOption === selectedEstimate
 					? 'bg-blue-500 text-white -translate-y-2 hover:bg-blue-200 hover:text-black'
 					: 'bg-white translate-y-0 hover:bg-blue-100'}
-			  hover:-translate-y-2
-			transition-transform duration-300 transform"
+			  		hover:-translate-y-2
+					transition-transform duration-300 transform"
 				on:click={() => submitEstimate(votingOption)}
 			>
 				{votingOption}
@@ -180,14 +205,14 @@
 			class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg cursor-pointer mt-4 w-full"
 			on:click={() => resetPlanning()}
 		>
-			Reset estimates ! (next issue TODO)
+			Reset estimates and estimate next issue
 		</button>
 	{:else}
 		<button
 			class="{allUsersVoted
 				? 'bg-green-500 hover:bg-green-600'
 				: 'bg-orange-500 hover:bg-orange-600'}
-		 text-white py-2 px-4 rounded-lg cursor-pointer mt-4 w-full disabled:bg-gray-400 disabled:cursor-default"
+		 		text-white py-2 px-4 rounded-lg cursor-pointer mt-4 w-full disabled:bg-gray-400 disabled:cursor-default"
 			on:click={() => toggleVotedEstimate()}
 			disabled={countNumberOfVote === 0}
 		>
