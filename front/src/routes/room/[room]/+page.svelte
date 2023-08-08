@@ -187,7 +187,7 @@
 
 <div class="container mx-auto h-full flex flex-col">
 	{#if !room?.exist}
-		<RoomNotFound roomCode={room.code} />
+		<RoomNotFound />
 	{:else if !currentUser?.isConnected || currentUser?.nickname === ''}
 		<NicknameChoice
 			nickname={currentUser.nickname}

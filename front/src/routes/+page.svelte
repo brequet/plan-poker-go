@@ -7,6 +7,10 @@
 	async function createRoom() {
 		console.log('Creating room:', roomName);
 
+		if (roomName === '') {
+			roomName = "Poker Planning Room"
+		}
+
 		try {
 			const response = await fetch('/room', {
 				method: 'POST',
@@ -53,8 +57,7 @@
 			</label>
 		</div>
 		<button
-			class="bg-blue-500 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-md w-full"
-			disabled={roomName.length === 0}
+			class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-md w-full"
 			on:click={createRoom}
 		>
 			Create

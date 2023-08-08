@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CheckCircleIcon, CircleDashedIcon } from 'lucide-svelte';
+	import { CheckCircleIcon, CircleDashedIcon, Share2Icon } from 'lucide-svelte';
 	import { minidenticon } from 'minidenticons';
 	import { onDestroy } from 'svelte';
 	import {
@@ -17,6 +17,8 @@
 		type User
 	} from './room';
 	import { webSocketConnection } from './webSocketStore';
+	import Modal from '$lib/components/Modal.svelte';
+	import { slide } from 'svelte/transition';
 
 	let room: Room;
 	const unsubscribeFromRoomStore = roomStore.subscribe((roomStore) => {
@@ -44,10 +46,13 @@
 		}
 	});
 
+	let isShareLinkModalOpen = false;
+
 	$: selectedEstimate = currentUser.estimate;
 	$: allUsers = [...connectedUsers, currentUser];
 	$: allUsersVoted = allUsers.every((user) => hasVoted(user));
 	$: countNumberOfVote = allUsers.reduce((count, user) => count + (hasVoted(user) ? 1 : 0), 0);
+	$: average = computeEstimateAverage(allUsers.map(user => user.estimate).filter(estimate => estimate !== undefined) as string[])
 
 	function hasVoted(user: User): boolean {
 		return user.estimate !== undefined && user.estimate.length > 0;
@@ -123,55 +128,100 @@
 	});
 </script>
 
-<div class="bg-white p-4 rounded-lg shadow mb-4 flex-1">
-	<h2 class="text-2xl font-bold mb-2">Room: {room.name}</h2>
+<svelte:head>
+	<title>POKER {room.name}</title>
+</svelte:head>
 
-	<h3 class="text-xl font-bold mb-2">Users in the Room</h3>
-	<!-- TODO cut in half, left for users, right for stats (average..) -->
-	<ul class="list-disc pl-6">
-		{#if connectedUsers.length === 0}
-			Feeling lonely TODO ?
-		{:else}
-			{#each connectedUsers as connectedUser}
-				<li class="flex items-center py-2 border-b border-gray-200">
-					<div class="w-12 h-12 flex-shrink-0">
-						<img
-							class="w-full h-full rounded-full object-cover"
-							src={`data:image/svg+xml;utf8,${encodeURIComponent(
-								minidenticon(connectedUser.nickname, undefined, undefined)
-							)}`}
-							alt={connectedUser.nickname}
-						/>
-					</div>
-					<div class="ml-4">
-						<p class="font-semibold">{connectedUser.nickname}</p>
-						<p class="text-gray-500">
-							{#if room.isEstimateRevealed}
-								<!-- SHOULD SHOW USER ESTIMATE -->
-								{#if connectedUser.estimate}
-									<span>{connectedUser.estimate}</span>
-								{:else}
-									<span>Didn't vote yet...</span>
-								{/if}
+<Modal isOpen={isShareLinkModalOpen} onClose={() => (isShareLinkModalOpen = false)}>
+	<h2 class="text-xl font-semibold mb-2">Share Room Link</h2>
+	<p>Copy and share this link:</p>
+	<input
+		type="text"
+		value={`http://127.0.0.1:8080/api/room/${room.code}`}
+		class="w-full p-2 border rounded mt-2"
+		readonly
+	/>
+	<button
+		class="mt-2 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+		on:click={() => navigator.clipboard.writeText(`http://127.0.0.1:8080/api/room/${room.code}`)}
+	>
+		Copy Link
+	</button>
+	<!-- TODO QR code + copyable url more clean + URL in .env and access using global store-->
+</Modal>
+
+<div class="bg-white p-4 rounded-lg shadow mb-4 flex-1">
+	<div class="flex">
+		<h2 class="text-2xl font-bold mb-2">Room: {room.name}</h2>
+
+		<button
+			class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 ml-auto flex items-center"
+			on:click={() => (isShareLinkModalOpen = true)}
+		>
+			<Share2Icon class="w-5 h-5 mr-2" />
+			Share Room Link
+		</button>
+	</div>
+
+	<div class="flex">
+		<!-- Users half -->
+		<div class="flex-grow  transition-all" transition:slide>
+			<h3 class="text-xl font-bold mb-2">Users in the Room</h3>
+			<ul class="list-disc pl-6">
+				{#if connectedUsers.length === 0}
+					Feeling lonely TODO ?
+				{:else}
+					{#each connectedUsers as connectedUser}
+						<li class="flex items-center py-2 border-b border-gray-200">
+							<div class="w-12 h-12 flex-shrink-0">
+								<img
+									class="w-full h-full rounded-full object-cover"
+									src={`data:image/svg+xml;utf8,${encodeURIComponent(
+										minidenticon(connectedUser.nickname, undefined, undefined)
+									)}`}
+									alt={connectedUser.nickname}
+								/>
+							</div>
+							<div class="ml-4">
+								<p class="font-semibold">{connectedUser.nickname}</p>
+								<p class="text-gray-500">
+									{#if room.isEstimateRevealed}
+										<!-- SHOULD SHOW USER ESTIMATE -->
+										{#if connectedUser.estimate}
+											<span>{connectedUser.estimate}</span>
+										{:else}
+											<span>Didn't vote yet...</span>
+										{/if}
+									{:else}
+										<!-- SHOULD HIDE USER ESTIMATE -->
+										{#if connectedUser.estimate}
+											<span>Is ready !</span>
+										{:else}
+											<span>Is still voting...</span>
+										{/if}
+									{/if}
+								</p>
+							</div>
+							{#if connectedUser.estimate}
+								<CheckCircleIcon class="ml-auto" color="green" />
 							{:else}
-								<!-- SHOULD HIDE USER ESTIMATE -->
-								{#if connectedUser.estimate}
-									<span>Is ready !</span>
-								{:else}
-									<span>Is still voting...</span>
-								{/if}
+								<CircleDashedIcon class="ml-auto" color="orange" />
 							{/if}
-						</p>
-					</div>
-					{#if connectedUser.estimate}
-						<CheckCircleIcon class="ml-auto" color="green" />
-					{:else}
-						<CircleDashedIcon class="ml-auto" color="orange" />
-					{/if}
-				</li>
-			{/each}
+						</li>
+					{/each}
+				{/if}
+			</ul>
+		</div>
+
+		{#if room.isEstimateRevealed}
+			<!-- Stats half -->
+			<div class="w-1/4 ml-4 transition-all duration-300">
+				<h2>Stats</h2>
+
+				Average : {average}
+			</div>
 		{/if}
-	</ul>
+	</div>
 </div>
 
 <!-- Poker Planning Interface -->
