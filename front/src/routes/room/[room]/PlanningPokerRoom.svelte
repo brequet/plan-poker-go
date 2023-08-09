@@ -18,7 +18,8 @@
 	} from './room';
 	import { webSocketConnection } from './webSocketStore';
 	import Modal from '$lib/components/Modal.svelte';
-	import { slide } from 'svelte/transition';
+	import { Bar } from 'svelte-chartjs';
+	import 'chart.js/auto';
 
 	let room: Room;
 	const unsubscribeFromRoomStore = roomStore.subscribe((roomStore) => {
@@ -48,11 +49,69 @@
 
 	let isShareLinkModalOpen = false;
 
+	$: userTabWidth = room.isEstimateRevealed ? 50 : 100;
+
 	$: selectedEstimate = currentUser.estimate;
 	$: allUsers = [...connectedUsers, currentUser];
 	$: allUsersVoted = allUsers.every((user) => hasVoted(user));
 	$: countNumberOfVote = allUsers.reduce((count, user) => count + (hasVoted(user) ? 1 : 0), 0);
-	$: average = computeEstimateAverage(allUsers.map(user => user.estimate).filter(estimate => estimate !== undefined) as string[])
+	$: average = computeEstimateAverage(
+		allUsers.map((user) => user.estimate).filter((estimate) => estimate !== undefined) as string[]
+	);
+
+	let estimatesGraphData: {
+		labels: string[];
+		datasets: {
+			label: string;
+			data: number[];
+			backgroundColor: string[];
+			borderColor: string[];
+			borderWidth: number;
+		}[];
+	} = {
+		labels: [],
+		datasets: [
+			{
+				label: '# of Votes',
+				data: [],
+				backgroundColor: [],
+				borderColor: [],
+				borderWidth: 1
+			}
+		]
+	};
+
+	let graphOptions = {
+		scales: {
+			y: {
+				ticks: {
+					precision: 0
+				}
+			}
+		}
+	};
+
+	$: {
+		let estimateCounts = allUsers.reduce((acc: { [key: string]: number }, user) => {
+			if (user.estimate) {
+				if (!acc[user.estimate]) {
+					acc[user.estimate] = 1;
+				} else {
+					acc[user.estimate]++;
+				}
+			}
+			return acc;
+		}, {});
+
+		estimatesGraphData.labels = [];
+		estimatesGraphData.datasets[0].data = [];
+		for (let estimate in estimateCounts) {
+			estimatesGraphData.labels.push(estimate);
+			estimatesGraphData.datasets[0].data.push(estimateCounts[estimate]);
+			estimatesGraphData.datasets[0].backgroundColor.push('rgba(75, 192, 192, 0.2)'); // Change as needed
+			estimatesGraphData.datasets[0].borderColor.push('rgba(75, 192, 192, 1)'); // Change as needed
+		}
+	}
 
 	function hasVoted(user: User): boolean {
 		return user.estimate !== undefined && user.estimate.length > 0;
@@ -98,7 +157,7 @@
 		socket.send(JSON.stringify(resetPlanningMessage));
 	}
 
-	function computeEstimateAverage(estimates: string[]): number {
+	function computeEstimateAverage(estimates: string[]): string {
 		let validEstimatesCount = 0;
 		let totalEstimate = 0;
 
@@ -114,10 +173,10 @@
 		}
 
 		if (validEstimatesCount === 0) {
-			return 0;
+			return '0';
 		}
 
-		return totalEstimate / validEstimatesCount;
+		return (totalEstimate / validEstimatesCount).toFixed(1);
 	}
 
 	onDestroy(() => {
@@ -150,7 +209,7 @@
 	<!-- TODO QR code + copyable url more clean + URL in .env and access using global store-->
 </Modal>
 
-<div class="bg-white p-4 rounded-lg shadow mb-4 flex-1">
+<div class="bg-white p-4 rounded-lg shadow mb-4 flex flex-1 flex-col">
 	<div class="flex">
 		<h2 class="text-2xl font-bold mb-2">Room: {room.name}</h2>
 
@@ -163,13 +222,14 @@
 		</button>
 	</div>
 
-	<div class="flex">
+	<div class="flex overflow-hidden flex-1">
 		<!-- Users half -->
-		<div class="flex-grow  transition-all" transition:slide>
+		<div style:width={userTabWidth + '%'} style:transition={'width 0.5s ease'}>
 			<h3 class="text-xl font-bold mb-2">Users in the Room</h3>
 			<ul class="list-disc pl-6">
 				{#if connectedUsers.length === 0}
-					Feeling lonely TODO ?
+					No one else is here ! Feeling lonely ?
+					<br />d
 				{:else}
 					{#each connectedUsers as connectedUser}
 						<li class="flex items-center py-2 border-b border-gray-200">
@@ -213,14 +273,16 @@
 			</ul>
 		</div>
 
-		{#if room.isEstimateRevealed}
-			<!-- Stats half -->
-			<div class="w-1/4 ml-4 transition-all duration-300">
-				<h2>Stats</h2>
+		<div class="ml-4" style:width={100 - userTabWidth + '%'} style:transition={'width 0.5s ease'}>
+			{#if room.isEstimateRevealed}
+				<!-- Stats half -->
+				<h3 class="text-xl font-bold mb-2">Stats</h3>
 
 				Average : {average}
-			</div>
-		{/if}
+
+				<Bar data={estimatesGraphData} options={graphOptions} />
+			{/if}
+		</div>
 	</div>
 </div>
 
