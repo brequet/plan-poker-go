@@ -248,7 +248,7 @@
 									{#if room.isEstimateRevealed}
 										<!-- SHOULD SHOW USER ESTIMATE -->
 										{#if connectedUser.estimate}
-											<span>{connectedUser.estimate}</span>
+											<span class="font-bold text-neutral-700">{connectedUser.estimate}</span>
 										{:else}
 											<span>Didn't vote yet...</span>
 										{/if}
@@ -278,7 +278,7 @@
 				<!-- Stats half -->
 				<h3 class="text-xl font-bold mb-2">Stats</h3>
 
-				Average : {average}
+				Average : <span class="font-bold">{average}</span>
 
 				<Bar data={estimatesGraphData} options={graphOptions} />
 			{/if}
