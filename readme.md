@@ -7,3 +7,6 @@
 - for each estimate value, show how many votes it got
 - use https://github.com/laurentpayot/minidenticons for user icon in room
 - in room, share button (especialy when empty room) -> copy to clipboard + QR code
+
+
+RENAME => ESTIMAKE

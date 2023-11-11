@@ -1,0 +1,16 @@
+version: '3'
+services:
+  estimake-server:
+    build: ./server
+    ports:
+      - "8080:8080"
+    networks:
+      - estimake-network
+  estimake-frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - estimake-network
+networks:
+  estimake-network:
