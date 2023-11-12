@@ -20,8 +20,9 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import { Bar } from 'svelte-chartjs';
 	import 'chart.js/auto';
+	import {PUBLIC_APP_URL} from '$env/static/public'
 
-	const COPY_LINK_BASE_URL = 'http://localhost:5173/room'; // TODO in env var
+	const COPY_LINK_BASE_URL = `${PUBLIC_APP_URL}/room`; // TODO in env var
 
 	let room: Room;
 	const unsubscribeFromRoomStore = roomStore.subscribe((roomStore) => {
@@ -151,7 +152,7 @@
 	}
 
 	function resetPlanning(): void {
-		console.log('resetPlanning');
+		console.debug('resetPlanning');
 		const resetPlanningMessage: ResetPlanningMessage = {
 			type: MessageType.RESET_PLANNING
 		};
@@ -190,7 +191,7 @@
 </script>
 
 <svelte:head>
-	<title>POKER {room.name}</title>
+	<title>ESTIMAKE - {room.name}</title>
 </svelte:head>
 
 <Modal isOpen={isShareLinkModalOpen} onClose={() => (isShareLinkModalOpen = false)}>

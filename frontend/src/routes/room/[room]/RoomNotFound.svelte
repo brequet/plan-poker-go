@@ -1,3 +1,7 @@
+<svelte:head>
+	<title>ESTIMAKE - Room not found</title>
+</svelte:head>
+
 <div class="max-w-md mx-auto">
 	<div class="bg-white p-6 rounded-lg shadow-md text-center">
 		<h2 class="text-2xl font-bold mb-4">Room Not Found</h2>

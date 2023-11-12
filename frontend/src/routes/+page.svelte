@@ -34,11 +34,15 @@
 
 	function joinRoom() {
 		console.log('Joining room:', roomCode);
-		goto(`/room/${roomCode}`);
-		// TODO: check room exist
+		window.location.href = `/room/${roomCode}`;
 	}
 
 </script>
+
+
+<svelte:head>
+	<title>ESTIMAKE - Home</title>
+</svelte:head>
 
 <div class="flex justify-center items-center h-full">
 	<form class="bg-white p-6 rounded-lg shadow-lg mx-4"> 

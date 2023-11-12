@@ -2,6 +2,7 @@ import type { Actions } from '@sveltejs/kit';
 import { GO_SERVER_ADDRESS } from '$env/static/private'
 
 export const load = async ({ cookies, params }) => {
+	console.log('BEGIN room/[room]/+page.server.ts load')
 	const nickname = cookies.get('nickname');
 	console.log('retrieved name', nickname)
 	// TODO: fetch room info (code, name, exist ?)
@@ -30,6 +31,7 @@ export const load = async ({ cookies, params }) => {
 		console.error('Error fetching room:', error);
 	}
 
+	console.log('END room/[room]/+page.server.ts load')
 	return {
 		nickname,
 		room

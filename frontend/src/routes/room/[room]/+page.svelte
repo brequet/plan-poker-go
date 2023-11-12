@@ -19,12 +19,16 @@
 
 	export let data;
 
+	console.log('[room] data', data);
+
 	roomStore.set({
 		code: $page.params.room,
 		name: data.room?.name,
 		exist: data.room !== undefined,
 		isEstimateRevealed: false
 	});
+
+	console.log('[room] roomStore room exist', data.room !== undefined);
 
 	currentUserStore.set({
 		nickname: data.nickname ?? '',
@@ -50,27 +54,13 @@
 
 	async function onNicknameChoice(nickname: string) {
 		localStorage.setItem('nickname', nickname);
-		console.log('nickname choosed!', nickname)
-		const response = await fetch(`${room.code}`, {
-			method: 'GET'
+		console.log('nickname choosed!', nickname);
+
+		currentUserStore.update((user) => {
+			user.isConnected = true;
+			user.nickname = nickname;
+			return user;
 		});
-
-		if (!response.ok) {
-			console.log('onNicknameChoice response not ok');
-			roomStore.update((room) => {
-				return { ...room, exist: false };
-			});
-		} else {
-			const roomInfo = await response.json();
-			const { roomCode } = roomInfo;
-			console.log('onNicknameChoice found room', roomInfo);
-
-			currentUserStore.update((user) => {
-				user.isConnected = true;
-				user.nickname = nickname;
-				return user;
-			});
-		}
 	}
 
 	// TODO: validate route room name https://learn.svelte.dev/tutorial/param-matchers -> simple regex like [AZ]{4} -> 4 from env file / conf / properties
