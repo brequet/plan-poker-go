@@ -1,7 +1,10 @@
 <script lang="ts">
+	import 'chart.js/auto';
 	import { CheckCircleIcon, CircleDashedIcon, Share2Icon } from 'lucide-svelte';
 	import { minidenticon } from 'minidenticons';
 	import { onDestroy } from 'svelte';
+	import ShareLinkModal from './components/ShareLinkModal.svelte';
+	import StatsView from './components/StatsView.svelte';
 	import {
 		MessageType,
 		type ResetPlanningMessage,
@@ -17,12 +20,6 @@
 		type User
 	} from './room';
 	import { webSocketConnection } from './webSocketStore';
-	import Modal from '$lib/components/Modal.svelte';
-	import { Bar } from 'svelte-chartjs';
-	import 'chart.js/auto';
-	import {PUBLIC_APP_URL} from '$env/static/public'
-
-	const COPY_LINK_BASE_URL = `${PUBLIC_APP_URL}/room`; // TODO in env var
 
 	let room: Room;
 	const unsubscribeFromRoomStore = roomStore.subscribe((roomStore) => {
@@ -37,7 +34,12 @@
 	let connectedUsers: User[];
 	const unsubscribeFromConnectedUsersStore = connectedUsersStore.subscribe(
 		(connectedUsersStore) => {
-			connectedUsers = connectedUsersStore;
+			// Put the current user first of the list
+			connectedUsers = connectedUsersStore.sort((a, b) => {
+				if (a.uuid === currentUser.uuid) return -1;
+				if (b.uuid === currentUser.uuid) return 1;
+				return 0;
+			});
 		}
 	);
 
@@ -55,11 +57,10 @@
 	$: userTabWidth = room.isEstimateRevealed ? 50 : 100;
 
 	$: selectedEstimate = currentUser.estimate;
-	$: allUsers = [...connectedUsers, currentUser];
-	$: allUsersVoted = allUsers.every((user) => hasVoted(user));
-	$: countNumberOfVote = allUsers.reduce((count, user) => count + (hasVoted(user) ? 1 : 0), 0);
+	$: allUsersVoted = connectedUsers.every((user) => hasVoted(user));
+	$: countNumberOfVote = connectedUsers.reduce((count, user) => count + (hasVoted(user) ? 1 : 0), 0);
 	$: average = computeEstimateAverage(
-		allUsers.map((user) => user.estimate).filter((estimate) => estimate !== undefined) as string[]
+		connectedUsers.map((user) => user.estimate).filter((estimate) => estimate !== undefined) as string[]
 	);
 
 	let estimatesGraphData: {
@@ -84,18 +85,8 @@
 		]
 	};
 
-	let graphOptions = {
-		scales: {
-			y: {
-				ticks: {
-					precision: 0
-				}
-			}
-		}
-	};
-
 	$: {
-		let estimateCounts = allUsers.reduce((acc: { [key: string]: number }, user) => {
+		let estimateCounts = connectedUsers.reduce((acc: { [key: string]: number }, user) => {
 			if (user.estimate) {
 				if (!acc[user.estimate]) {
 					acc[user.estimate] = 1;
@@ -190,27 +181,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>ESTIMAKE - {room.name}</title>
-</svelte:head>
-
-<Modal isOpen={isShareLinkModalOpen} onClose={() => (isShareLinkModalOpen = false)}>
-	<h2 class="text-xl font-semibold mb-2">Share Room Link</h2>
-	<p>Copy and share this link:</p>
-	<input
-		type="text"
-		value={`${COPY_LINK_BASE_URL}/${room.code}`}
-		class="w-full p-2 border rounded mt-2"
-		readonly
-	/>
-	<button
-		class="mt-2 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-		on:click={() => navigator.clipboard.writeText(`${COPY_LINK_BASE_URL}/${room.code}`)}
-	>
-		Copy Link
-	</button>
-	<!-- TODO QR code + copyable url more clean + URL in .env and access using global store-->
-</Modal>
+<ShareLinkModal bind:isShareLinkModalOpen roomCode={room.code} />
 
 <div class="bg-white p-4 rounded-lg shadow mb-4 flex flex-1 flex-col">
 	<div class="flex">
@@ -246,7 +217,10 @@
 								/>
 							</div>
 							<div class="ml-4">
-								<p class="font-semibold">{connectedUser.nickname}</p>
+								<p class="font-semibold">
+									{connectedUser.nickname}
+									{connectedUser.uuid === currentUser.uuid ? '(me)' : ''}
+								</p>
 								<p class="text-gray-500">
 									{#if room.isEstimateRevealed}
 										<!-- SHOULD SHOW USER ESTIMATE -->
@@ -277,13 +251,9 @@
 		</div>
 
 		<div class="ml-4" style:width={100 - userTabWidth + '%'} style:transition={'width 0.5s ease'}>
+			<!-- Stats half -->
 			{#if room.isEstimateRevealed}
-				<!-- Stats half -->
-				<h3 class="text-xl font-bold mb-2">Stats</h3>
-
-				Average : <span class="font-bold">{average}</span>
-
-				<Bar data={estimatesGraphData} options={graphOptions} />
+				<StatsView bind:average bind:estimatesGraphData />
 			{/if}
 		</div>
 	</div>
@@ -334,7 +304,7 @@
 			Reveal Voted Estimates
 			{allUsersVoted
 				? ''
-				: `(${allUsers.length - countNumberOfVote} user(s) didn't submit their estimate yet)`}
+				: `(${connectedUsers.length - countNumberOfVote} user(s) didn't submit their estimate yet)`}
 		</button>
 	{/if}
 </div>

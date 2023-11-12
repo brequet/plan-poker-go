@@ -118,20 +118,19 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 	user := rm.ConnectNewUserToRoom(joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
 	if user == nil {
 		log.Printf("User %s could not join the room %s", joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
+		// TODO: return if fails and adapt in front -> e.g. if user joins nickname choices while the room still exist, and then validate the name when the rooms expire, we get a error 500
 		return
 	}
 	client.roomCode = joinRoomMessage.RoomCode
 	client.user = user
 
-	connectedUsers := []User{} // TODO: add in message existing users in the room
+	connectedUsers := []User{}
 	for _, connectedUser := range rm.GetAllUserFromRoomByRoomCode(client.roomCode) {
-		if connectedUser != user {
-			connectedUsers = append(connectedUsers, User{
-				UserName: connectedUser.Nickname,
-				Uuid:     connectedUser.Uuid,
-				Estimate: connectedUser.Estimate,
-			})
-		}
+		connectedUsers = append(connectedUsers, User{
+			UserName: connectedUser.Nickname,
+			Uuid:     connectedUser.Uuid,
+			Estimate: connectedUser.Estimate,
+		})
 	}
 
 	room := rm.FindRoomByRoomCode(client.roomCode)
@@ -197,7 +196,7 @@ func onSubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateM
 			Estimate: submitEstimateMessage.Estimate,
 		},
 	}
-	go broadcastMessageToOtherClientsInRoom(userSubmittedMessage, client.user, client.roomCode)
+	go broadcastMessageToAllClientsInRoom(userSubmittedMessage, client.roomCode)
 }
 
 func onRevealEstimateEvent(client *Client, revealEstimateMessage RevealEstimateMessage) {

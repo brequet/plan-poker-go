@@ -15,11 +15,9 @@
 		type User
 	} from './room';
 	import { webSocketConnection } from './webSocketStore';
-	import Layout from '../../+layout.svelte';
+	import { browser } from "$app/environment";
 
 	export let data;
-
-	console.log('[room] data', data);
 
 	roomStore.set({
 		code: $page.params.room,
@@ -28,10 +26,8 @@
 		isEstimateRevealed: false
 	});
 
-	console.log('[room] roomStore room exist', data.room !== undefined);
-
 	currentUserStore.set({
-		nickname: data.nickname ?? '',
+		nickname: browser ? (localStorage.getItem('nickname') ?? '') : '',
 		isConnected: false
 	});
 
@@ -54,7 +50,6 @@
 
 	async function onNicknameChoice(nickname: string) {
 		localStorage.setItem('nickname', nickname);
-		console.log('nickname choosed!', nickname);
 
 		currentUserStore.update((user) => {
 			user.isConnected = true;
@@ -167,14 +162,16 @@
 		}
 	}
 
-	// TODO: page title 'Poker Room ABCD'
-
 	onDestroy(() => {
 		unsubscribeFromSocketWritable();
 		unsubscribeFromRoomStore();
 		unsubscribeFromCurrentUserStore();
 	});
 </script>
+
+<svelte:head>
+	<title>ESTIMAKE - {room.name}</title>
+</svelte:head>
 
 <div class="container mx-auto h-full flex flex-col">
 	{#if !room?.exist}
