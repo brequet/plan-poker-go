@@ -1,11 +1,9 @@
 <script lang="ts">
 	import Modal from '$lib/components/Modal.svelte';
-	import { PUBLIC_APP_URL } from '$env/static/public';
     
 	export let isShareLinkModalOpen = false;
-	export let roomCode = '';
 
-	const shareableLink = `${PUBLIC_APP_URL}/room/${roomCode}`;
+	const shareableLink = window.location.href;
 </script>
 
 <Modal isOpen={isShareLinkModalOpen} onClose={() => (isShareLinkModalOpen = false)}>

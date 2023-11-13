@@ -181,7 +181,7 @@
 	});
 </script>
 
-<ShareLinkModal bind:isShareLinkModalOpen roomCode={room.code} />
+<ShareLinkModal bind:isShareLinkModalOpen />
 
 <div class="bg-white p-4 rounded-lg shadow mb-4 flex flex-1 flex-col">
 	<div class="flex">
