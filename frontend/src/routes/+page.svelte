@@ -1,16 +1,14 @@
 <script>
 	import { goto } from '$app/navigation';
 	
-	let roomName = '';
+	let inputRoomName = '';
 	let roomCode = '';
 
 	async function createRoom() {
-		console.log('Creating room:', roomName);
-
-		if (roomName === '') {
-			roomName = "Poker Planning Room"
-		}
-
+		// TODO: add spinner ?
+		const roomName = inputRoomName.length > 0 ? inputRoomName : "Poker Planning Room";
+		console.log('input', inputRoomName, 'roomName', roomName)
+		console.log('llllllla', inputRoomName.length)
 		try {
 			const response = await fetch('/room', {
 				method: 'POST',
@@ -21,13 +19,13 @@
 			});
 
 			if (!response.ok) {
-				console.log('response not ok');
+				throw new Error(`POST response not ok: ${response.status}`, );
 			} else {
 				const { roomCode } = await response.json();
 				goto(`/room/${roomCode}`);
-				// TODO: refactor
 			}
 		} catch (error) {
+			// todo snackbar
 			console.error('Error creating room:', error);
 		}
 	}
@@ -54,8 +52,7 @@
 				<input
 					class="border rounded-md py-2 px-4 w-full"
 					type="text"
-					bind:value={roomName}
-					required
+					bind:value={inputRoomName}
 					placeholder="My planning poker room"
 				/>
 			</label>

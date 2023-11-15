@@ -20,7 +20,6 @@ export async function POST({ request }): Promise<any> {
 		if (!response.ok) {
             console.log('response not ok');
 		} else {
-			// The room was created successfully, you can handle the response here
 			responseData = await response.json();
 		}
 	} catch (error) {

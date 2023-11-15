@@ -40,6 +40,8 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	clients[client] = true
 	log.Printf("New connection from %s", client.conn.RemoteAddr())
 
+	// TODO if room doesn't exist, close connection
+
 	go handleMessages(client)
 }
 
@@ -114,11 +116,12 @@ func handleDisconnection(client *Client) {
 }
 
 func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo in event.go ?
-	// TODO: check if user exist (ip:port ?) -> ex: if user F5 refresh page, keep connection if possible
+	// TODO: check if user exist (ip ?) -> ex: if user F5 refresh page, keep connection if possible
 	user := rm.ConnectNewUserToRoom(joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
 	if user == nil {
 		log.Printf("User %s could not join the room %s", joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
 		// TODO: return if fails and adapt in front -> e.g. if user joins nickname choices while the room still exist, and then validate the name when the rooms expire, we get a error 500
+		// Or maybe just do not accept the web socket connection ?
 		return
 	}
 	client.roomCode = joinRoomMessage.RoomCode
@@ -284,7 +287,7 @@ func createRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 	if roomData.RoomName == "" {
 		// RoomName empty, return an error response
-		http.NotFound(w, r) /// TODO: bad param
+		http.NotFound(w, r) // TODO: bad param
 		return
 	}
 

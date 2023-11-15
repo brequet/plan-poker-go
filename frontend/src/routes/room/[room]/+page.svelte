@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { onDestroy } from 'svelte';
 	import NicknameChoice from './NicknameChoice.svelte';
@@ -15,7 +16,6 @@
 		type User
 	} from './room';
 	import { webSocketConnection } from './webSocketStore';
-	import { browser } from "$app/environment";
 
 	export let data;
 
@@ -27,12 +27,13 @@
 	});
 
 	currentUserStore.set({
-		nickname: browser ? (localStorage.getItem('nickname') ?? '') : '',
+		nickname: browser ? localStorage.getItem('nickname') ?? '' : '',
 		isConnected: false
 	});
 
-	let socket: WebSocket; //TODO: do something if socket becomes null (ex: server crashes)
+	let socket: WebSocket;
 	const unsubscribeFromSocketWritable = webSocketConnection.subscribe((ws) => {
+		console.log(new Date(), 'ws', ws) 
 		if (ws) {
 			socket = ws;
 		}

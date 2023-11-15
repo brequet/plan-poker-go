@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const ROOM_CODE_SIZE = 4 // TODO: in conf
+const ROOM_CODE_SIZE = 4
 
 type User struct {
 	Uuid     string
@@ -75,9 +75,10 @@ func GetAllUserFromRoomByRoomCode(roomCode string) (users []*User) {
 	return users
 }
 
-func ConnectNewUserToRoom(nickname, roomCode string) *User { // TODO: return errors saying why user cant connect (ex: room doesn't exist)
+func ConnectNewUserToRoom(nickname, roomCode string) *User {
 	room := FindRoomByRoomCode(roomCode)
 	if room == nil {
+		log.Printf("User '%s' could not join the room '%s' because it does not exist.", nickname, roomCode)
 		return nil
 	}
 
@@ -99,7 +100,6 @@ func DisconnectUserFromRoom(user *User, roomCode string) {
 
 	log.Printf("User '%s' disconnected from room '%s'", user.Nickname, roomCode)
 	delete(room.Users, user)
-	// TODO: timeout if no user left -> delete room
 }
 
 func SubmitEstimate(user *User, roomCode string, estimate string) (err error) {

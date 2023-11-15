@@ -15,6 +15,7 @@
 	onMount(() => {
 		const url = 'ws://localhost:8080/ws'; // TODO: from conf file || env file
 		socket = new WebSocket(url);
+		console.debug(`Web socket url ${url}\n\tws ${socket}`)
 		webSocketConnection.set(socket);
 
 		socket.onopen = () => {

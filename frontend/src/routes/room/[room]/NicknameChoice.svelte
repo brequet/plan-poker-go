@@ -5,7 +5,6 @@
 	export let nickname = '';
 
     const dispatch = createEventDispatcher();
-
 	function confirmNickname() {
 		dispatch('nicknameChoice', {nickname})
 	}
