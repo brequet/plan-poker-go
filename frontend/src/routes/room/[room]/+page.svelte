@@ -19,7 +19,7 @@
 
 	export let data;
 
-	const webSocketUrl = `ws://${window.location.hostname}/api/ws`; // TODO handle dev env (port 8080) + env file maybe better
+	const webSocketUrl = `ws://estimake.requet.fr/api/ws`; // TODO handle dev env (port 8080) + env file maybe better
 	// ws://localhost:8080/ws for env dev
 
 	roomStore.set({
