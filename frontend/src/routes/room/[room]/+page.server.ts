@@ -31,7 +31,7 @@ export const load = async ({ cookies, params }) => {
 
 	console.log('END room/[room]/+page.server.ts load')
 	return {
-		room
+		room,
 	};
 };
 

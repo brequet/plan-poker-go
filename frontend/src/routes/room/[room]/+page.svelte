@@ -19,6 +19,9 @@
 
 	export let data;
 
+	const webSocketUrl = `ws://${window.location.hostname}/api/ws`; // TODO handle dev env (port 8080) + env file maybe better
+	// ws://localhost:8080/ws for env dev
+
 	roomStore.set({
 		code: $page.params.room,
 		name: data.room?.name,
@@ -186,6 +189,7 @@
 		<WebSocketConnection
 			{currentUser}
 			roomCode={room.code}
+			webSocketUrl={webSocketUrl}
 			on:message={(event) => handleWsMessage(event.detail)}
 		/>
 		{#if socket !== null && room.name}

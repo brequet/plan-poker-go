@@ -14,13 +14,13 @@ func TestCreateRoom(t *testing.T) {
 	}
 
 	// Check if the room exists in the rooms map
-	if _, exist := rooms[createdRoom.code]; !exist {
+	if _, exist := rooms[createdRoom.Code]; !exist {
 		t.Errorf("Expected the created room to exist in the rooms map, but it does not")
 	}
 
 	// Check if the room's name matches the provided name
-	if createdRoom.name != roomName {
-		t.Errorf("Expected room name %s, but got %s", roomName, createdRoom.name)
+	if createdRoom.Name != roomName {
+		t.Errorf("Expected room name %s, but got %s", roomName, createdRoom.Name)
 	}
 }
 
@@ -28,7 +28,7 @@ func TestFindRoomByRoomCode(t *testing.T) {
 	roomName := "TestRoom"
 	createdRoom := CreateRoom(roomName)
 
-	foundRoom := FindRoomByRoomCode(createdRoom.code)
+	foundRoom := FindRoomByRoomCode(createdRoom.Code)
 
 	// Check if the found room is not nil
 	if foundRoom == nil {
@@ -36,8 +36,8 @@ func TestFindRoomByRoomCode(t *testing.T) {
 	}
 
 	// Check if the found room's code matches the provided code
-	if foundRoom.code != createdRoom.code {
-		t.Errorf("Expected room code %s, but got %s", createdRoom.code, foundRoom.code)
+	if foundRoom.Code != createdRoom.Code {
+		t.Errorf("Expected room code %s, but got %s", createdRoom.Code, foundRoom.Code)
 	}
 
 	// Check finding a non-existent room
@@ -55,7 +55,7 @@ func TestConnectNewUserToRoom(t *testing.T) {
 	createdRoom := CreateRoom(roomName)
 
 	nickname := "TestUser"
-	user := ConnectNewUserToRoom(nickname, createdRoom.code)
+	user := ConnectNewUserToRoom(nickname, createdRoom.Code)
 
 	// Check if the user connected successfully
 	if user == nil {
@@ -63,7 +63,7 @@ func TestConnectNewUserToRoom(t *testing.T) {
 	}
 
 	// Check if the user exists in the room's users map
-	if _, exist := createdRoom.users[user]; !exist {
+	if _, exist := createdRoom.Users[user]; !exist {
 		t.Errorf("Expected the user to exist in the room's users map, but it doesn't")
 	}
 
@@ -82,10 +82,10 @@ func TestDisconnectUserFromRoom(t *testing.T) {
 	createdRoom := CreateRoom(roomName)
 
 	nickname := "TestUser"
-	ConnectNewUserToRoom(nickname, createdRoom.code)
+	ConnectNewUserToRoom(nickname, createdRoom.Code)
 
-	user := &User{nickname: nickname}
-	userDisconnected := DisconnectUserFromRoom(user, createdRoom.code)
+	user := &User{Nickname: nickname}
+	userDisconnected := DisconnectUserFromRoom(user, createdRoom.Code)
 
 	// Check if the user disconnected successfully
 	if !userDisconnected {
@@ -93,7 +93,7 @@ func TestDisconnectUserFromRoom(t *testing.T) {
 	}
 
 	// Check if the user doesn't exist in the room's users map after disconnection
-	if _, exist := createdRoom.users[user]; exist {
+	if _, exist := createdRoom.Users[user]; exist {
 		t.Errorf("Expected the user to be removed from the room's users map, but it still exists")
 	}
 

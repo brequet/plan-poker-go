@@ -330,7 +330,7 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/ws", wsHandler)
+	router.HandleFunc("/api/ws", wsHandler)
 	router.HandleFunc("/api/room", createRoomHandler).Methods("POST")
 	router.HandleFunc("/api/room/{roomCode}", getRoomHandler).Methods("GET")
 

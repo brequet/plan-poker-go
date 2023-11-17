@@ -7,15 +7,15 @@
 
 	export let currentUser: CurrentUser;
 	export let roomCode: string;
+	export let webSocketUrl: string;
 
 	const dispatch = createEventDispatcher();
 
 	let socket: WebSocket;
 
 	onMount(() => {
-		const url = 'ws://localhost:8080/ws'; // TODO: from conf file || env file
-		socket = new WebSocket(url);
-		console.debug(`Web socket url ${url}\n\tws ${socket}`)
+		socket = new WebSocket(webSocketUrl);
+		console.debug(`Web socket url ${webSocketUrl}\n\tws ${socket}`)
 		webSocketConnection.set(socket);
 
 		socket.onopen = () => {
