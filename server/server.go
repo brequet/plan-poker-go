@@ -119,7 +119,6 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 	// TODO: check if user exist (ip ?) -> ex: if user F5 refresh page, keep connection if possible
 	user := rm.ConnectNewUserToRoom(joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
 	if user == nil {
-		log.Printf("User %s could not join the room %s", joinRoomMessage.Nickname, joinRoomMessage.RoomCode)
 		// TODO: return if fails and adapt in front -> e.g. if user joins nickname choices while the room still exist, and then validate the name when the rooms expire, we get a error 500
 		// Or maybe just do not accept the web socket connection ?
 		return
@@ -293,7 +292,6 @@ func createRoomHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create a new room with the provided room name
 	newRoom := rm.CreateRoom(roomData.RoomName)
-	log.Printf("Created room : [%s] %s\n", newRoom.Code, newRoom.Name)
 
 	// Respond with the room details (e.g., room ID) to the frontend
 	response := mapRmRoomToRoom(newRoom)
