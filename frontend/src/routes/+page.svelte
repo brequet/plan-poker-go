@@ -7,8 +7,7 @@
 	async function createRoom() {
 		// TODO: add spinner ?
 		const roomName = inputRoomName.length > 0 ? inputRoomName : 'Poker Planning Room';
-		console.log('input', inputRoomName, 'roomName', roomName);
-		console.log('llllllla', inputRoomName.length);
+		console.debug('Creating room:', roomName)
 		try {
 			const response = await fetch('/room', {
 				method: 'POST',
@@ -26,14 +25,15 @@
 			}
 		} catch (error) {
 			// todo snackbar
-			console.error('Error creating room:', error);
+			console.error('Something went wrong while creating the room.', error);
 		}
 	}
 
 	function joinRoom() {
-		console.log('Joining room:', roomCode);
-		window.location.href = `/room/${roomCode}`;
+		console.debug('Joining room:', roomCode)
+		window.location.href = `/room/${roomCode.toUpperCase()}`;
 	}
+
 </script>
 
 <svelte:head>

@@ -1,8 +1,7 @@
 import type { Actions } from '@sveltejs/kit';
 import { GO_SERVER_ADDRESS, WEBSOCKET_ADDRESS } from '$env/static/private'
 
-export const load = async ({ cookies, params }) => {
-	console.log('BEGIN room/[room]/+page.server.ts load')
+export const load = async ({ params }) => {
 	// TODO: fetch room info (code, name, exist ?)
 	const roomCode = params.room;
 	let room: {
@@ -11,7 +10,7 @@ export const load = async ({ cookies, params }) => {
 	} | undefined;
 
 	try {
-		console.log('reqqquuueest url :', `${GO_SERVER_ADDRESS}/api/room/${roomCode}`);
+		console.log(`User trying to join room at address: ${GO_SERVER_ADDRESS}/api/room/${roomCode}`);
 		const response = await fetch(`${GO_SERVER_ADDRESS}/api/room/${roomCode}`, {
 			method: 'GET',
 			headers: {
@@ -20,17 +19,13 @@ export const load = async ({ cookies, params }) => {
 		});
 
 		if (!response.ok) {
-			console.log('response not ok load');
+			throw new Error(`GET response not ok: ${response.status}`);
 		} else {
-			// The room was created successfully, you can handle the response here
 			room = await response.json();
-			console.log('room found', room);
 		}
 	} catch (error) {
-		console.error('Error fetching room:', error);
+		console.error('Something went wrong while fetching the room.', error);
 	}
-
-	console.log('END room/[room]/+page.server.ts load')
 
 	return {
 		room,

@@ -173,7 +173,7 @@
 </script>
 
 <svelte:head>
-	<title>ESTIMAKE - {room.name}</title>
+	<title>{room.name}</title>
 </svelte:head>
 
 <div class="container mx-auto h-full flex flex-col">

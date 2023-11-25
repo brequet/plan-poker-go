@@ -63,7 +63,16 @@
 		connectedUsers.map((user) => user.estimate).filter((estimate) => estimate !== undefined) as string[]
 	);
 
-	let estimatesGraphData = {
+	let estimatesGraphData: {
+		labels: string[];
+		datasets: {
+			label: string;
+			data: number[];
+			backgroundColor: string[];
+			borderColor: string[];
+			borderWidth: number;
+		}[];
+	} = {
 		labels: [],
 		datasets: [
 			{
@@ -93,8 +102,8 @@
 		for (let estimate in estimateCounts) {
 			estimatesGraphData.labels.push(estimate);
 			estimatesGraphData.datasets[0].data.push(estimateCounts[estimate]);
-			estimatesGraphData.datasets[0].backgroundColor.push('rgba(75, 192, 192, 0.2)'); // Change as needed
-			estimatesGraphData.datasets[0].borderColor.push('rgba(75, 192, 192, 1)'); // Change as needed
+			estimatesGraphData.datasets[0].backgroundColor.push('rgba(75, 192, 192, 0.2)');
+			estimatesGraphData.datasets[0].borderColor.push('rgba(75, 192, 192, 1)');
 		}
 	}
 

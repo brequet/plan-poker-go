@@ -1,5 +1,5 @@
 <svelte:head>
-	<title>ESTIMAKE - Room not found</title>
+	<title>Room not found</title>
 </svelte:head>
 
 <div class="max-w-md mx-auto">

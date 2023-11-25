@@ -15,7 +15,7 @@
 
 	onMount(() => {
 		socket = new WebSocket(webSocketUrl);
-		console.debug(`Web socket url ${webSocketUrl}\n\tws ${socket}`)
+		console.debug(`Connecting websocket to: ${webSocketUrl}..`)
 		webSocketConnection.set(socket);
 
 		socket.onopen = () => {
@@ -39,6 +39,7 @@
 
 		socket.onerror = (error) => {
 			console.error('WebSocket error:', error);
+			webSocketConnection.set(undefined);
 		};
 
 		socket.onclose = (event) => {

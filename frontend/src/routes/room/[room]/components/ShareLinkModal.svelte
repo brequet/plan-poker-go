@@ -3,7 +3,7 @@
     
 	export let isShareLinkModalOpen = false;
 
-	const shareableLink = window.location.href;
+	const shareableLink = window.location.href; // TODO fix, get host + append room
 </script>
 
 <Modal isOpen={isShareLinkModalOpen} onClose={() => (isShareLinkModalOpen = false)}>
