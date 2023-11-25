@@ -40,7 +40,7 @@ func CreateRoom(roomName string) *Room {
 		return nil
 	}
 	roomCode := generateUniqueRoomCode()
-	log.Printf("Creating room with name '%s', generated code : '%s'", roomName, roomCode)
+	log.Printf("[%s] Creating room with name '%s'", roomCode, roomName)
 	createdRoom := &Room{
 		Users:              make(map[*User]bool),
 		Name:               roomName,
@@ -55,7 +55,7 @@ func CreateRoom(roomName string) *Room {
 func FindRoomByRoomCode(roomCode string) *Room {
 	room, exist := rooms[roomCode]
 	if !exist {
-		log.Printf("Room with code '%s' not found", roomCode)
+		log.Printf("Room not found from code [%s]", roomCode)
 		return nil
 	}
 	return room
@@ -78,14 +78,14 @@ func GetAllUserFromRoomByRoomCode(roomCode string) (users []*User) {
 func ConnectNewUserToRoom(nickname, roomCode string) *User {
 	room := FindRoomByRoomCode(roomCode)
 	if room == nil {
-		log.Printf("User '%s' could not join the room '%s' because it does not exist.", nickname, roomCode)
+		log.Printf("User '%s' could not join the room: the room [%s] was not found.", nickname, roomCode)
 		return nil
 	}
 
 	newUser := createUser(nickname)
 	room.Users[newUser] = true
 	room.lastUpdated = time.Now()
-	log.Printf("User '%s' joined the room : '%s'", nickname, roomCode)
+	log.Printf("[%s] User %s joined the room", roomCode, newUser.Uuid)
 
 	return newUser
 }
@@ -98,20 +98,20 @@ func DisconnectUserFromRoom(user *User, roomCode string) {
 
 	room.lastUpdated = time.Now()
 
-	log.Printf("User '%s' disconnected from room '%s'", user.Nickname, roomCode)
+	log.Printf("[%s] User '%s' disconnected", roomCode, user.Nickname)
 	delete(room.Users, user)
 }
 
 func SubmitEstimate(user *User, roomCode string, estimate string) (err error) {
 	room := FindRoomByRoomCode(roomCode)
 	if room == nil {
-		errMsg := fmt.Sprintf("Room [%s] not found, cannot submit user %s estimate (%s)", roomCode, user.Uuid, estimate)
+		errMsg := fmt.Sprintf("User %s could not submit estimate {%s}: the room [%s] was not found", user.Uuid, estimate, roomCode)
 		return errors.New(errMsg)
 	}
 
 	room.lastUpdated = time.Now()
 
-	log.Printf("User %s submitted estimate {%s} in room [%s]", user.Uuid, estimate, roomCode)
+	log.Printf("[%s] User %s submitted estimate {%s}", roomCode, user.Uuid, estimate)
 	user.Estimate = estimate
 
 	return nil
@@ -120,13 +120,17 @@ func SubmitEstimate(user *User, roomCode string, estimate string) (err error) {
 func ToggleShouldRevealEstimateForRoom(roomCode string) (bool, error) {
 	room := FindRoomByRoomCode(roomCode)
 	if room == nil {
-		errMsg := fmt.Sprintf("Room [%s] not found, cannot toggle estimate reveal", roomCode)
+		errMsg := fmt.Sprintf("Cannot toggle estimate reveal: the room [%s] was not found", roomCode)
 		return false, errors.New(errMsg)
 	}
 
 	room.lastUpdated = time.Now()
 	room.IsEstimateRevealed = !room.IsEstimateRevealed
-	log.Printf("Toggled estimate reveal to '%t' for room [%s]", room.IsEstimateRevealed, roomCode)
+	if room.IsEstimateRevealed {
+		log.Printf("[%s] Estimates revealed", roomCode)
+	} else {
+		log.Printf("[%s] Estimates hidden", roomCode)
+	}
 
 	return room.IsEstimateRevealed, nil
 }
@@ -134,7 +138,7 @@ func ToggleShouldRevealEstimateForRoom(roomCode string) (bool, error) {
 func ResetPlanningForRoom(roomCode string) error {
 	room := FindRoomByRoomCode(roomCode)
 	if room == nil {
-		errMsg := fmt.Sprintf("Room [%s] not found, cannot reset planning", roomCode)
+		errMsg := fmt.Sprintf("Cannot reset the planning: the room [%s] was not found", roomCode)
 		return errors.New(errMsg)
 	}
 
@@ -144,7 +148,7 @@ func ResetPlanningForRoom(roomCode string) error {
 		user.Estimate = ""
 	}
 
-	log.Printf("Reseted planning for room [%s]", roomCode)
+	log.Printf("[%s] The estimates were reset", roomCode)
 
 	return nil
 }
@@ -197,7 +201,7 @@ func cleanupEmptyRooms() {
 	for roomCode, room := range rooms {
 		if len(room.Users) == 0 && currentTimestamp.Sub(room.lastUpdated) > maxIdleDuration {
 			delete(rooms, roomCode)
-			log.Printf("Deleted room [%s] due to inactivity", roomCode)
+			log.Printf("[%s] Room deleted due to inactivity", roomCode)
 		}
 	}
 }

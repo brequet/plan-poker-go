@@ -1,5 +1,5 @@
 import type { Actions } from '@sveltejs/kit';
-import { GO_SERVER_ADDRESS } from '$env/static/private'
+import { GO_SERVER_ADDRESS, WEBSOCKET_ADDRESS } from '$env/static/private'
 
 export const load = async ({ cookies, params }) => {
 	console.log('BEGIN room/[room]/+page.server.ts load')
@@ -9,6 +9,7 @@ export const load = async ({ cookies, params }) => {
 		name: string;
 		code: string;
 	} | undefined;
+
 	try {
 		console.log('reqqquuueest url :', `${GO_SERVER_ADDRESS}/api/room/${roomCode}`);
 		const response = await fetch(`${GO_SERVER_ADDRESS}/api/room/${roomCode}`, {
@@ -30,8 +31,10 @@ export const load = async ({ cookies, params }) => {
 	}
 
 	console.log('END room/[room]/+page.server.ts load')
+
 	return {
 		room,
+		webSocketUrl:WEBSOCKET_ADDRESS
 	};
 };
 

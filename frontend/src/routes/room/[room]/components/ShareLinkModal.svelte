@@ -19,6 +19,7 @@
 		class="mt-2 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
 		on:click={() => navigator.clipboard.writeText(shareableLink)}
 	>
+	<!-- TODO: on click, notify that the link has been copied (tooltip on click ? snackbar ?) -->
 		Copy Link
 	</button>
 	<!-- TODO QR code + copyable url more clean + URL in .env and access using global store-->
