@@ -1,8 +1,17 @@
 <script lang="ts">
 	import { Bar } from 'svelte-chartjs';
 
-	export let average;
-	export let estimatesGraphData;
+	export let average: string;
+	export let estimatesGraphData: {
+		labels: string[];
+		datasets: {
+			label: string;
+			data: number[];
+			backgroundColor: string[];
+			borderColor: string[];
+			borderWidth: number;
+		}[];
+	};
 
 	let graphOptions = {
 		scales: {

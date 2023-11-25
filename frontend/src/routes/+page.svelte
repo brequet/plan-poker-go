@@ -1,14 +1,14 @@
 <script>
 	import { goto } from '$app/navigation';
-	
+
 	let inputRoomName = '';
 	let roomCode = '';
 
 	async function createRoom() {
 		// TODO: add spinner ?
-		const roomName = inputRoomName.length > 0 ? inputRoomName : "Poker Planning Room";
-		console.log('input', inputRoomName, 'roomName', roomName)
-		console.log('llllllla', inputRoomName.length)
+		const roomName = inputRoomName.length > 0 ? inputRoomName : 'Poker Planning Room';
+		console.log('input', inputRoomName, 'roomName', roomName);
+		console.log('llllllla', inputRoomName.length);
 		try {
 			const response = await fetch('/room', {
 				method: 'POST',
@@ -19,7 +19,7 @@
 			});
 
 			if (!response.ok) {
-				throw new Error(`POST response not ok: ${response.status}`, );
+				throw new Error(`POST response not ok: ${response.status}`);
 			} else {
 				const { roomCode } = await response.json();
 				goto(`/room/${roomCode}`);
@@ -34,18 +34,16 @@
 		console.log('Joining room:', roomCode);
 		window.location.href = `/room/${roomCode}`;
 	}
-
 </script>
-
 
 <svelte:head>
 	<title>ESTIMAKE - Home</title>
 </svelte:head>
 
-<div class="flex justify-center items-center h-full">
-	<form class="bg-white p-6 rounded-lg shadow-lg mx-4"> 
+<div class="flex flex-col justify-evenly sm:flex-row sm:justify-center items-center h-full">
+	<form class="bg-white p-6 rounded-lg shadow-lg sm:mx-4">
 		<!-- TODO: could be a component (create/join) -->
-		<h2 class="text-2xl font-bold mb-4">Create a Room</h2>
+		<h2 class="sm:text-2xl font-bold mb-4">Create a Room</h2>
 		<div class="flex items-center mb-4">
 			<label class="block text-gray-700 font-semibold">
 				Room Name:
@@ -65,8 +63,8 @@
 		</button>
 	</form>
 
-	<form class="bg-white p-6 rounded-lg shadow-lg mx-4">
-		<h2 class="text-2xl font-bold mb-4">Join a Room</h2>
+	<form class="bg-white p-6 rounded-lg shadow-lg sm:mx-4">
+		<h2 class="sm:text-2xl font-bold mb-4">Join a Room</h2>
 		<div class="flex items-center mb-4">
 			<label class="block text-gray-700 font-semibold">
 				Room Code:

@@ -63,16 +63,7 @@
 		connectedUsers.map((user) => user.estimate).filter((estimate) => estimate !== undefined) as string[]
 	);
 
-	let estimatesGraphData: {
-		labels: string[];
-		datasets: {
-			label: string;
-			data: number[];
-			backgroundColor: string[];
-			borderColor: string[];
-			borderWidth: number;
-		}[];
-	} = {
+	let estimatesGraphData = {
 		labels: [],
 		datasets: [
 			{
@@ -192,7 +183,7 @@
 			on:click={() => (isShareLinkModalOpen = true)}
 		>
 			<Share2Icon class="w-5 h-5 mr-2" />
-			Share Room Link
+			Share
 		</button>
 	</div>
 
@@ -262,12 +253,12 @@
 <!-- Poker Planning Interface -->
 <div class="p-4">
 	<p class="text-gray-600">Select your estimate:</p>
-	<div class="grid grid-cols-10 gap-4 mt-4">
+	<div class="grid grid-cols-5 md:grid-cols-10 gap-x-1 gap-y-2 md:gap-3 mt-2 sm:mt-4">
 		{#each votingOptions as votingOption}
 			<button
 				class="border border-blue-500 text-center py-2 h-16 rounded-lg cursor-pointer
 					{votingOption === selectedEstimate
-					? 'bg-blue-500 text-white -translate-y-2 hover:bg-blue-200 hover:text-black'
+					? 'bg-blue-500 text-white -translate-y-1 sm:-translate-y-2 hover:bg-blue-200 hover:text-black'
 					: 'bg-white translate-y-0 hover:bg-blue-100'}
 			  		hover:-translate-y-2
 					transition-transform duration-300 transform"

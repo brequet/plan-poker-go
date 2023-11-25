@@ -14,11 +14,11 @@
 		</a>
 	</div>
 
-	<nav class="flex items-center justify-between bg-blue-500 py-4 px-8">
+	<nav class="sm:flex items-center justify-between bg-blue-500 py-4 sm:px-8">
 		{#each navItems as navItem}
 			<a
 				href={navItem.href}
-				class="text-white text-lg font-semibold py-2 px-4 hover:underline hover:text-gray-100"
+				class="text-white sm:text-lg font-semibold py-2 px-4 hover:underline hover:text-gray-100"
 			>
 				{navItem.name}
 			</a>
