@@ -2,32 +2,26 @@
 	import '../app.css';
 
 	const navItems = [
-		{name: 'Home', href:"/"},
-		{name: 'About', href:"/about"}
-	]
+		{ name: 'Home', href: '/' },
+		{ name: 'About', href: '/about' }
+	];
 </script>
 
-<header class="bg-blue-500 py-4 flex flex-row">
-	<div class="container mx-auto px-4">
-		<!-- TODO: find a nice font -->
-		
-		<a
-			href="/"
-			class=""
-		>
-		<h1 class="text-white text-4xl font-bold">ESTIMAKE</h1>
+<header class="bg-blue-500 py-2 flex flex-row">
+	<div class="container mx-auto px-4 flex items-center">
+		<a href="/" class="">
+			<h1 class="text-white text-5xl" style="font-family: 'Montserrat Regular Alt1';">ESTIMAKE</h1>
 		</a>
-		<p class="text-white mt-2">Plan and estimate together!</p>
 	</div>
 
 	<nav class="flex items-center justify-between bg-blue-500 py-4 px-8">
-		{#each navItems as navItem }
-		<a
-			href={navItem.href}
-			class="text-white text-lg font-semibold py-2 px-4 hover:underline hover:text-gray-100"
-		>
-			{navItem.name}
-		</a>
+		{#each navItems as navItem}
+			<a
+				href={navItem.href}
+				class="text-white text-lg font-semibold py-2 px-4 hover:underline hover:text-gray-100"
+			>
+				{navItem.name}
+			</a>
 		{/each}
 	</nav>
 </header>
