@@ -6,12 +6,14 @@ services:
       - "8080:8080"
     networks:
       - estimake-network
+    restart: unless-stopped
   estimake-frontend:
     build: ./frontend
     ports:
       - "3000:3000"
     networks:
       - estimake-network
+    restart: unless-stopped
 networks:
   estimake-network:
  
