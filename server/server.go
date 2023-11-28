@@ -171,6 +171,10 @@ func onRoomJoinEvent(client *Client, joinRoomMessage JoinRoomMessage) { // todo 
 }
 
 func onSubmitEstimateEvent(client *Client, submitEstimateMessage SubmitEstimateMessage) {
+	if client.user == nil {
+		return
+	}
+
 	err := rm.SubmitEstimate(client.user, client.roomCode, submitEstimateMessage.Estimate)
 	if err != nil {
 		return
@@ -234,7 +238,7 @@ func onResetPlanningEvent(client *Client) {
 func getAllClientsInRoomByRoomCode(roomCode string) (foundClients []*Client) {
 	for _, user := range rm.GetAllUserFromRoomByRoomCode(roomCode) {
 		for client, _ := range clients {
-			if user.Uuid == client.user.Uuid {
+			if client.user != nil && user.Uuid == client.user.Uuid {
 				foundClients = append(foundClients, client)
 			}
 		}
@@ -248,8 +252,8 @@ func getAllOtherClientsInRoomByRoomCode(excludedUser *rm.User, roomCode string) 
 			continue
 		}
 
-		for client, _ := range clients {
-			if user.Uuid == client.user.Uuid {
+		for client := range clients {
+			if client.user != nil && user.Uuid == client.user.Uuid {
 				foundClients = append(foundClients, client)
 			}
 		}
