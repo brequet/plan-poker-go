@@ -29,7 +29,3 @@
 <main class="flex-1 bg-gray-100 p-4">
 	<slot />
 </main>
-
-<!-- <footer class="bg-blue-500 py-2 text-white text-center">
-	<p>2023 No Company. No right reserved.</p>
-</footer> -->

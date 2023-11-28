@@ -102,8 +102,8 @@
 		for (let estimate in estimateCounts) {
 			estimatesGraphData.labels.push(estimate);
 			estimatesGraphData.datasets[0].data.push(estimateCounts[estimate]);
-			estimatesGraphData.datasets[0].backgroundColor.push('rgba(75, 192, 192, 0.2)');
-			estimatesGraphData.datasets[0].borderColor.push('rgba(75, 192, 192, 1)');
+			estimatesGraphData.datasets[0].backgroundColor.push('#3B94CB33');
+			estimatesGraphData.datasets[0].borderColor.push('#3B94CB');
 		}
 	}
 
@@ -183,7 +183,7 @@
 
 <ShareLinkModal bind:isShareLinkModalOpen />
 
-<div class="bg-white p-4 rounded-lg shadow mb-4 flex flex-1 flex-col">
+<div class="bg-white p-4 rounded-lg shadow mb-4 flex flex-1 flex-col bg-">
 	<div class="flex">
 		<h2 class="text-2xl font-bold mb-2">Room: {room.name}</h2>
 
@@ -295,7 +295,7 @@
 	{:else}
 		<button
 			class="{allUsersVoted
-				? 'bg-green-500 hover:bg-green-600'
+				? 'bg-blue-500 hover:bg-blue-600'
 				: 'bg-orange-500 hover:bg-orange-600'}
 		 		text-white py-2 px-4 rounded-lg cursor-pointer mt-4 w-full disabled:bg-gray-400 disabled:cursor-default"
 			on:click={() => toggleVotedEstimate()}
