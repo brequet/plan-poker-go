@@ -335,7 +335,9 @@ func main() {
 	router.HandleFunc("/api/ws", wsHandler)
 	router.HandleFunc("/api/room", createRoomHandler).Methods("POST")
 	router.HandleFunc("/api/room/{roomCode}", getRoomHandler).Methods("GET")
-
+	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("ok"))
+	}).Methods("GET")
 	/*
 		TODO: endpoint for
 		- fetching room info (name, code, connected user..)
