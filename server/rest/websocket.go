@@ -1,17 +1,113 @@
-package main
+package rest
 
 import (
 	"encoding/json"
 	"log"
+
 	"net/http"
 
 	rm "github.com/baptiste-requet/plan-poker-go/rooms-manager"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
-// TODO: better logging (with levels)
+type User struct {
+	UserName string `json:"userName"`
+	Uuid     string `json:"uuid"`
+	Estimate string `json:"estimate"`
+}
+
+type Room struct {
+	RoomCode           string `json:"roomCode"`
+	RoomName           string `json:"roomName"`
+	IsEstimateRevealed bool   `json:"isEstimateRevealed"`
+}
+
+type MessageType string
+
+/*
+	Both received and send message
+*/
+
+const (
+	REVEAL_ESTIMATE MessageType = "reveal_estimate"
+)
+
+type RevealEstimateMessage struct {
+	ShouldReveal bool `json:"shouldReveal"`
+}
+
+/*
+	Received messages
+*/
+
+const (
+	JOIN_ROOM       MessageType = "join_room"
+	SUBMIT_ESTIMATE MessageType = "submit_estimate"
+	RESET_PLANNING  MessageType = "reset_planning"
+)
+
+type ReceiveMessage struct {
+	Type    MessageType
+	Payload json.RawMessage
+}
+
+type JoinRoomMessage struct {
+	RoomCode string `json:"roomCode"`
+	Nickname string `json:"nickname"`
+}
+
+type SubmitEstimateMessage struct {
+	Estimate string `json:"estimate"`
+}
+
+type ResetPlanningMessage struct {
+}
+
+/*
+	Sended messages
+*/
+
+const (
+	USER_JOINED                 MessageType = "user_joined"
+	USER_DISCONNECTED           MessageType = "user_disconnected"
+	CONFIRM_CONNECTION          MessageType = "confirm_connection"
+	CONFIRM_ESTIMATE_SUBMISSION MessageType = "confirm_estimate_submission"
+	USER_SUBMITTED_ESTIMATE     MessageType = "user_submitted_estimate"
+	ESTIMATE_SUBMITTED          MessageType = "estimate_submitted"
+	ESTIMATE_REVEALED           MessageType = "estimate_revealed"
+	PLANNING_RESETED            MessageType = "planning_reseted"
+)
+
+type SendMessage struct {
+	Type    MessageType `json:"type"`
+	Payload interface{} `json:"payload"`
+}
+
+type UserJoinedMessage struct {
+	User User `json:"user"`
+}
+
+type UserDisconnectedMessage struct {
+	User User `json:"user"`
+}
+
+type ConfirmConnectionMessage struct {
+	User           User   `json:"user"`
+	ConnectedUsers []User `json:"connectedUsers"`
+	Room           Room   `json:"room"`
+}
+
+type ConfirmEstimateSubmissionMessage struct {
+	Estimate string `json:"estimate"`
+}
+
+type UserSubmittedEstimate struct {
+	User     User   `json:"user"`
+	Estimate string `json:"estimate"`
+}
+
+type PlanningResetedMessage struct {
+}
 
 type Client struct {
 	conn     *websocket.Conn
@@ -273,82 +369,4 @@ func broadcastMessageToAllClientsInRoom(message interface{}, roomCode string) {
 
 func broadcastMessageToOtherClientsInRoom(message interface{}, excludedUser *rm.User, roomCode string) {
 	broadcastMessageToClients(message, getAllOtherClientsInRoomByRoomCode(excludedUser, roomCode))
-}
-
-// HTTP endpoint to create a new room
-func createRoomHandler(w http.ResponseWriter, r *http.Request) {
-	// Parse request body to get room name and other data
-	var roomData struct {
-		RoomName string `json:"roomName"`
-		// Other relevant fields
-	}
-	if err := json.NewDecoder(r.Body).Decode(&roomData); err != nil {
-		log.Printf("Error in createRoomHandler: %s\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if roomData.RoomName == "" {
-		// RoomName empty, return an error response
-		http.NotFound(w, r) // TODO: bad param
-		return
-	}
-
-	// Create a new room with the provided room name
-	newRoom := rm.CreateRoom(roomData.RoomName)
-
-	// Respond with the room details (e.g., room ID) to the frontend
-	response := mapRmRoomToRoom(newRoom)
-
-	// Send the response back to the frontend
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-// HTTP endpoint to get a room
-func getRoomHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract the room code from the URL path parameter
-	roomCode := mux.Vars(r)["roomCode"]
-
-	// Retrieve the room from your data store using the room code
-	room := rm.FindRoomByRoomCode(roomCode)
-
-	if room == nil {
-		// Room not found, return an error response
-		http.NotFound(w, r)
-		return
-	}
-
-	// Respond with the room details (e.g., room ID) to the frontend
-	response := mapRmRoomToRoom(room)
-
-	// Send the response back to the frontend
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-func main() {
-	log.Println("Server started on 127.0.0.1:8080")
-
-	router := mux.NewRouter()
-
-	router.HandleFunc("/api/ws", wsHandler)
-	router.HandleFunc("/api/room", createRoomHandler).Methods("POST")
-	router.HandleFunc("/api/room/{roomCode}", getRoomHandler).Methods("GET")
-	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("ok"))
-	}).Methods("GET")
-	/*
-		TODO: endpoint for
-		- fetching room info (name, code, connected user..)
-		- fetching all rooms (for admin purpose)
-		-
-	*/
-
-	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
-	// originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
-	originsOk := handlers.AllowedOrigins([]string{"*"})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
-
-	log.Fatal(http.ListenAndServe("0.0.0.0:8080", handlers.CORS(originsOk, headersOk, methodsOk)(router)))
 }
