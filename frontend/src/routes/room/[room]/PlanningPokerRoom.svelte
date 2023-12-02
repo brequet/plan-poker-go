@@ -183,7 +183,7 @@
 
 <ShareLinkModal bind:isShareLinkModalOpen />
 
-<div class="bg-white p-4 rounded-lg shadow mb-4 flex flex-1 flex-col bg-">
+<div class="bg-white p-4 rounded-lg shadow mb-4 flex flex-1 flex-col">
 	<div class="flex">
 		<h2 class="text-2xl font-bold mb-2">Room: {room.name}</h2>
 
