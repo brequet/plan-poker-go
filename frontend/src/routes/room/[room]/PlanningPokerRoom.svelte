@@ -266,7 +266,7 @@
 		{#each votingOptions as votingOption}
 			<button
 				class="border border-blue-500 text-center py-2 h-16 rounded-lg cursor-pointer
-					{votingOption === selectedEstimate
+					{selectedEstimate === votingOption
 					? 'bg-blue-500 text-white -translate-y-1 sm:-translate-y-2 hover:bg-blue-200 hover:text-black'
 					: 'bg-white translate-y-0 hover:bg-blue-100'}
 			  		hover:-translate-y-2

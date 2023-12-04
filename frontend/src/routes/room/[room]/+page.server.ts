@@ -26,7 +26,7 @@ export const load = async ({ params }) => {
 	} catch (error) {
 		console.error('Something went wrong while fetching the room.', error);
 	}
-
+	console.log("LOADED DATA BACK", room)
 	return {
 		room,
 		webSocketUrl:WEBSOCKET_ADDRESS

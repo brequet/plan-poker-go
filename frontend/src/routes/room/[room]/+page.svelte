@@ -16,26 +16,39 @@
 		type User
 	} from './room';
 	import { webSocketConnection } from './webSocketStore';
+	import { invalidateAll } from '$app/navigation';
 
 	export let data;
-
+	console.log('LOADED DATA', data);
 	const webSocketUrl = data.webSocketUrl;
 
-	roomStore.set({
-		code: $page.params.room,
-		name: data.room?.name,
-		exist: data.room !== undefined,
-		isEstimateRevealed: false
-	});
+	function initRoom(data: {
+		room: { name: string; code: string } | undefined;
+		webSocketUrl: string;
+	}) {
+		console.log('LOADED DATA', data);
+		roomStore.set({
+			code: $page.params.room,
+			name: data.room?.name,
+			exist: data.room !== undefined,
+			isEstimateRevealed: false
+		});
 
-	currentUserStore.set({
-		nickname: browser ? localStorage.getItem('nickname') ?? '' : '',
-		isConnected: false
-	});
+		currentUserStore.set({
+			nickname: browser ? localStorage.getItem('nickname') ?? '' : '',
+			isConnected: false
+		});
+	}
+	initRoom(data);
 
-	let socket: WebSocket;
+	let socket: WebSocket | undefined;
 	const unsubscribeFromSocketWritable = webSocketConnection.subscribe((ws) => {
-		console.log(new Date(), 'ws', ws) 
+		console.log(new Date(), 'ws', ws);
+		if (socket !== undefined && ws === undefined) {
+			console.log('Lost web socket connection');
+			invalidateAll().then(() => initRoom(data));
+		}
+
 		if (ws) {
 			socket = ws;
 		}
@@ -188,10 +201,10 @@
 		<WebSocketConnection
 			{currentUser}
 			roomCode={room.code}
-			webSocketUrl={webSocketUrl}
+			{webSocketUrl}
 			on:message={(event) => handleWsMessage(event.detail)}
 		/>
-		{#if socket !== null && room.name}
+		{#if socket !== undefined && room.name}
 			<!-- TODO: loading while socket connecting -->
 			<PlanningPokerRoom />
 		{/if}
