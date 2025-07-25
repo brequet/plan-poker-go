@@ -33,13 +33,13 @@
 	});
 
 	function initRoom(data: {
-		room: { name: string; code: string } | undefined;
+		room: { roomName: string; roomCode: string } | undefined;
 		webSocketUrl: string;
 	}) {
 		console.log('LOADED DATA', data);
 		roomStore.set({
 			code: $page.params.room,
-			name: data.room?.name,
+			name: data.room?.roomName,
 			exist: data.room !== undefined,
 			isEstimateRevealed: false
 		});

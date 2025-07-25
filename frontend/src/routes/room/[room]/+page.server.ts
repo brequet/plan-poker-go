@@ -5,8 +5,8 @@ export const load = async ({ params }) => {
 	// TODO: fetch room info (code, name, exist ?)
 	const roomCode = params.room;
 	let room: {
-		name: string;
-		code: string;
+		roomName: string;
+		roomCode: string;
 	} | undefined;
 
 	try {
