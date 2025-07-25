@@ -18,7 +18,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
       # --- API and WebSocket Routing ---
-      - "traefik.http.routers.estimake-api.rule=Host(`estimake.yourdomain.com`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.estimake-api.rule=Host(`estimake.requet.fr`) && PathPrefix(`/api`)"
       - "traefik.http.routers.estimake-api.entrypoints=websecure"
       - "traefik.http.routers.estimake-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.estimake-api.loadbalancer.server.port=8080"
@@ -42,7 +42,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
       # --- Main Application Routing ---
-      - "traefik.http.routers.estimake-app.rule=Host(`estimake.yourdomain.com`)"
+      - "traefik.http.routers.estimake-app.rule=Host(`estimake.requet.fr`)"
       - "traefik.http.routers.estimake-app.entrypoints=websecure"
       - "traefik.http.routers.estimake-app.tls.certresolver=letsencrypt"
       - "traefik.http.services.estimake-app.loadbalancer.server.port=3000"
