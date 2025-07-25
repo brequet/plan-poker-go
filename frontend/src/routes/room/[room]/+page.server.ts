@@ -1,5 +1,5 @@
+import { GO_SERVER_ADDRESS } from '$env/static/private';
 import type { Actions } from '@sveltejs/kit';
-import { GO_SERVER_ADDRESS, WEBSOCKET_ADDRESS } from '$env/static/private'
 
 export const load = async ({ params }) => {
 	// TODO: fetch room info (code, name, exist ?)
@@ -29,7 +29,6 @@ export const load = async ({ params }) => {
 	console.log("LOADED DATA BACK", room)
 	return {
 		room,
-		webSocketUrl:WEBSOCKET_ADDRESS
 	};
 };
 

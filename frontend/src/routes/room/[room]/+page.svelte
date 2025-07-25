@@ -20,7 +20,16 @@
 
 	export let data;
 	console.log('LOADED DATA', data);
-	const webSocketUrl = data.webSocketUrl;
+	let webSocketUrl = '';
+	onMount(() => {
+		if (browser) {
+			const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+			const host = window.location.host;
+			webSocketUrl = `${protocol}://${host}/api/ws`;
+		}
+
+		initRoom(data);
+	});
 
 	function initRoom(data: {
 		room: { name: string; code: string } | undefined;
@@ -39,7 +48,6 @@
 			isConnected: false
 		});
 	}
-	initRoom(data);
 
 	let socket: WebSocket | undefined;
 	const unsubscribeFromSocketWritable = webSocketConnection.subscribe((ws) => {

@@ -18,9 +18,7 @@ RUN pnpm install --frozen-lockfile
 # This stage builds the SvelteKit application.
 FROM base AS builder
 ARG GO_SERVER_ADDRESS
-ARG WEBSOCKET_ADDRESS
 ENV GO_SERVER_ADDRESS=${GO_SERVER_ADDRESS}
-ENV WEBSOCKET_ADDRESS=${WEBSOCKET_ADDRESS}
 
 # Copy source code and the installed dependencies
 COPY . .
