@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import NicknameChoice from './NicknameChoice.svelte';
 	import PlanningPokerRoom from './PlanningPokerRoom.svelte';
 	import RoomNotFound from './RoomNotFound.svelte';
@@ -16,8 +17,6 @@
 		type User
 	} from './room';
 	import { webSocketConnection } from './webSocketStore';
-	import { invalidateAll } from '$app/navigation';
-	import { onMount } from 'svelte';
 
 	export let data;
 	console.log('LOADED DATA', data);
@@ -32,10 +31,7 @@
 		initRoom(data);
 	});
 
-	function initRoom(data: {
-		room: { roomName: string; roomCode: string } | undefined;
-		webSocketUrl: string;
-	}) {
+	function initRoom(data: { room: { roomName: string; roomCode: string } | undefined }) {
 		console.log('LOADED DATA', data);
 		roomStore.set({
 			code: $page.params.room,
@@ -63,7 +59,7 @@
 		}
 	});
 
-	let room: Room;
+	let room: Room | undefined;
 	const unsubscribeFromRoomStore = roomStore.subscribe((roomStore) => {
 		room = roomStore;
 	});
@@ -195,7 +191,7 @@
 </script>
 
 <svelte:head>
-	<title>{room.name}</title>
+	<title>{room?.name}</title>
 </svelte:head>
 
 <div class="container mx-auto h-full flex flex-col">
