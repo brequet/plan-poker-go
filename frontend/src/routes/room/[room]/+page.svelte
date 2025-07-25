@@ -17,6 +17,7 @@
 	} from './room';
 	import { webSocketConnection } from './webSocketStore';
 	import { invalidateAll } from '$app/navigation';
+	import { onMount } from 'svelte';
 
 	export let data;
 	console.log('LOADED DATA', data);

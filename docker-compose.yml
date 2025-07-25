@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   estimake-server:
     build:
@@ -29,7 +27,6 @@ services:
       args:
         # These are build-time arguments passed to the SvelteKit frontend
         GO_SERVER_ADDRESS: http://estimake-server:8080
-        WEBSOCKET_ADDRESS: ws://estimake-server:8080/api/ws
     restart: unless-stopped
     networks:
       - dokploy-network
